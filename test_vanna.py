@@ -1,13 +1,12 @@
 import os
 from dotenv import load_dotenv
-from vanna.integrations.openai import OpenAILlmService
+from vanna.integrations.azureopenai import AzureOpenAILlmService
 from vanna import Agent
 from vanna.core.registry import ToolRegistry
 from vanna.core.user import UserResolver, User, RequestContext
 from vanna.tools import RunSqlTool, VisualizeDataTool
 from vanna.tools.agent_memory import SaveQuestionToolArgsTool, SearchSavedCorrectToolUsesTool, SaveTextMemoryTool
 from vanna.servers.fastapi import VannaFastAPIServer
-from vanna.integrations.openai import OpenAILlmService
 from vanna.integrations.postgres import PostgresRunner
 from vanna.integrations.local.agent_memory import DemoAgentMemory
 
@@ -16,10 +15,12 @@ load_dotenv()
 
 
 
-llm = OpenAILlmService(
-    deployment_name="gpt-5",
+# 2. Configuración para Azure
+llm = AzureOpenAILlmService(
+    model="gpt-4",                 # O el nombre de tu modelo base
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT")
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    api_version="2024-02-15-preview" # ¡Importante! Azure necesita versión de API
 )
 
 db_tool = RunSqlTool(

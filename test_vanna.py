@@ -9,7 +9,7 @@ from vanna.tools.agent_memory import SaveQuestionToolArgsTool, SearchSavedCorrec
 from vanna.servers.fastapi import VannaFastAPIServer
 from vanna.integrations.postgres import PostgresRunner
 from vanna.integrations.local.agent_memory import DemoAgentMemory
-
+from vanna.integrations.pinecone.agent_memory import PineconeAgentMemory
 
 load_dotenv()
 
@@ -31,7 +31,11 @@ db_tool = RunSqlTool(
 
 
 # Configure your agent memory
-agent_memory = DemoAgentMemory(max_items=1000)
+agent_memory = PineconeAgentMemory(
+    api_key=os.getenv("PINECONE_API_KEY"),
+    environment=os.getenv("PINECONE_ENVIRONMENT"),
+    index_name=os.getenv("PINECONE_INDEX_NAME")
+)
 
 # Configure user authentication
 class SimpleUserResolver(UserResolver):

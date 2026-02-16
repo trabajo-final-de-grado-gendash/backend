@@ -1,0 +1,21 @@
+# uv
+uv.lock
+.uv/
+
+# Environment
+.env
+
+# Logs
+logs/
+*.log
+
+# MacOS
+.DS_Store
+
+# Data
+tests/fixtures/chinook.db
+
+# Output
+output.json
+*.png
+*.html

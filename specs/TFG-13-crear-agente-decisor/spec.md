@@ -248,7 +248,10 @@ El sistema mantiene el historial de mensajes de cada sesión de usuario en base 
 
 - **FR-003**: El agente decisor DEBE invocar a Vanna AI para convertir la consulta en lenguaje natural a SQL válido compatible con la base de datos Chinook. Si Vanna AI falla, el agente DEBE reformular el prompt con más contexto y reintentar **una sola vez**; si el reintento también falla, retorna un error descriptivo al usuario
 
-- **FR-004**: El agente decisor DEBE ejecutar el SQL generado por Vanna AI contra la base de datos Chinook **únicamente si la consulta es de tipo `SELECT`**. Antes de ejecutar cualquier SQL, el sistema DEBE validar que no contenga operaciones de escritura o destrucción (`DELETE`, `DROP`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE` u otras operaciones DML/DDL). Si el SQL generado contiene alguna de estas operaciones, DEBE ser rechazado sin ejecutarse
+- **FR-004**: El sistema DEBE implementar una capa de validación de SQL que se ejecute **siempre, antes de toda ejecución contra Chinook**. Esta capa DEBE:
+  - Parsear la consulta SQL y rechazar cualquiera que contenga operaciones `DELETE`, `DROP`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, `CREATE`, `REPLACE` u otras operaciones no-`SELECT`
+  - Retornar un error descriptivo indicando que el sistema sólo permite consultas de lectura y registrar el intento bloqueado en el log
+  - Esta validación es una salvaguarda de última línea ineludible. Si es exitosa, el agente decisor ejecuta el SQL generado por Vanna.
 
 - **FR-005**: El agente decisor DEBE invocar al agente de visualización con el DataFrame obtenido y la consulta original del usuario como contexto
 
@@ -289,12 +292,6 @@ El sistema mantiene el historial de mensajes de cada sesión de usuario en base 
 - **FR-021**: La API REST DEBE exponer un endpoint GET `/results/{result_id}` que retorne el resultado de visualización guardado para un `result_id` dado
 
 - **FR-022**: El fallo de persistencia en BD NO DEBE interrumpir la respuesta al cliente; el sistema DEBE operar en modo degradado y registrar el fallo en el log
-
-- **FR-024**: El sistema DEBE implementar una capa de validación de SQL que se ejecute **siempre, antes de toda ejecución contra Chinook**, independientemente del origen del SQL. Esta capa DEBE:
-  - Parsear la consulta SQL y rechazar cualquiera que contenga operaciones `DELETE`, `DROP`, `UPDATE`, `INSERT`, `ALTER`, `TRUNCATE`, `CREATE`, `REPLACE` o cualquier otra operación no-`SELECT`
-  - Retornar al usuario un error descriptivo indicando que el sistema sólo permite consultas de lectura
-  - Registrar el intento bloqueado en el log de orquestación
-  - Esta validación es una salvaguarda de última línea que NO puede ser deshabilitada ni bypaseada por el agente
 
 - **FR-023**: La respuesta del endpoint `/generate` DEBE indicar su tipo mediante un campo `response_type` con tres valores posibles:
   - `"visualization"`: el pipeline produjo un gráfico válido

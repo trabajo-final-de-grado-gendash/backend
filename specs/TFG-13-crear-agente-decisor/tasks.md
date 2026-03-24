@@ -145,6 +145,11 @@ Fase 9 (Polish): luego de todas las historias de usuario
 - [ ] T046 [P] Agregar manejadores globales de excepciones HTTP en `api/src/api/main.py` para `SQLValidationError` → 400, `PipelineError` → 500, errores de conexión a BD → 503 con cuerpo JSON estructurado en formato `error_type/message/context` (FR-011, contracts/api-v1.md §Error Responses)
 - [ ] T047 Agregar manejo de timeout en `decision_agent/src/decision_agent/agent.py`: aplicar límite de < 15s de duración total del pipeline; lanzar `PipelineError(error_type="timeout")` si se supera (NFR-001)
 - [ ] T048 Revisar y verificar que todas las llamadas a `structlog` en `decision_agent/`, `vanna_agent/`, `orchestrator/` y `api/` emitan los campos: `agent`, `stage`, `session_id`, `elapsed_ms`, y en caso de error: `error_type`, `context` (FR-008, NFR-003, SC-007)
+- [ ] T049 Implementar tests de integración y unitarios para `decision_agent` (`test_classifier.py`, `test_sql_validator.py`, `test_agent.py`) con pytest, usando mocks para LLM (Constitution Principle VII).
+- [ ] T050 Implementar tests para `vanna_agent` (`test_agent.py`): tests unitarios rápidos mockeando el LLM y base de datos, además de un test de integración E2E hacia la BD PostgreSQL (Chinook) sin mockear, marcado con `@pytest.mark.integration` (FR-015, Constitution Principle VII).
+- [ ] T051 Implementar tests de endpoints de la API (`test_generate.py`, `test_health.py`, `test_sessions.py`, `test_results.py`) con FastAPI TestClient.
+- [ ] T052 Ejecutar validaciones de código `mypy` y `ruff` sobre `decision_agent/`, `vanna_agent/`, `orchestrator/` y `api/` asegurando 0 errores (Constitution Principle V).
+- [ ] T053 Asegurar la generación del reporte de cobertura `pytest --cov` logrando ≥ 80% antes de dar por completo el sprint (Constitution Principle VII).
 
 ---
 
@@ -159,7 +164,7 @@ T001-T004 (Setup)
       → T033-T036 (US4 orchestrator)              ← rutas US3 se conectan vía pipeline_service
       → T037-T039 (US5 persistencia de resultados) ← requiere rutas US3 + BD
       → T040-T042 (US6 conversación)              ← requiere rutas US3 + BD
-    → T043-T048 (Polish)
+    → T043-T053 (Polish y Tests)
 ```
 
 ---
@@ -191,7 +196,7 @@ Secuencial: T036 (pipeline_service luego de T033-T035), luego T030, T031, T032 (
 
 ## Validación de formato
 
-Todas las 48 tareas siguen el formato: `- [ ] T### [P?] [US?] Descripción con ruta de archivo`. ✅
+Todas las 53 tareas siguen el formato: `- [ ] T### [P?] [US?] Descripción con ruta de archivo`. ✅
 
 ## Resumen
 
@@ -205,7 +210,7 @@ Todas las 48 tareas siguen el formato: `- [ ] T### [P?] [US?] Descripción con r
 | Fase 6 — US4 Orchestrator | US4 (P3) | 4 | 1 |
 | Fase 7 — US5 Persistencia | US5 (P2) | 3 | 0 |
 | Fase 8 — US6 Historial | US6 (P2) | 3 | 0 |
-| Fase 9 — Polish | — | 6 | 4 |
-| **Total** | **6 historias** | **48** | **23** |
+| Fase 9 — Polish y Tests | — | 11 | 7 |
+| **Total** | **6 historias** | **53** | **26** |
 
 **Alcance MVP**: Fases 1 + 2 + 3 (23 tareas) → pipeline del agente decisor funcionando de forma standalone, sin API ni persistencia.

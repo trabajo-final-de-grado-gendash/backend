@@ -100,7 +100,7 @@ backend/
 │   │   └── vanna_agent/
 │   │       ├── __init__.py
 │   │       ├── agent.py               # Entry-point: VannaAgent.text_to_sql() / .execute_sql()
-│   │       ├── config.py             # Config (Azure OpenAI + Chinook connection)
+│   │       ├── config.py             # Config (Gemini + Chinook connection)
 │   │       └── models.py             # Pydantic models (Text2SQLInput, Text2SQLOutput)
 │   ├── tests/
 │   │   ├── __init__.py
@@ -232,7 +232,7 @@ graph TD
 
 **Entry-point**: `VannaAgent.text_to_sql(query: str) -> str` / `VannaAgent.execute_sql(sql: str) -> pd.DataFrame`
 
-**Nota**: Internamente reutiliza la configuración que ya funciona en `test_vanna.py` (Azure OpenAI + PostgresRunner + Chinook). No reescribimos Vanna — solo la organizamos como agente standalone.
+**Nota**: Internamente reutiliza la configuración de Vanna v2 usando Gemini (`GeminiLlmService` + `PostgresRunner` + Chinook). No reescribimos Vanna — solo la organizamos como agente standalone.
 
 ### Orchestrator (`orchestrator/`)
 

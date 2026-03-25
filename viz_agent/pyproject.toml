@@ -60,3 +60,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/viz_agent"]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+extraPaths = ["src"]
+venvPath = ".."
+venv = ".venv"

@@ -14,7 +14,7 @@ class GeminiClient:
     
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
-        self.model = "gemini-2.5-flash"
+        self.model = "gemini-3-flash-preview"
         
         # Configuración base de generación
         self.base_config = {

@@ -133,10 +133,15 @@ class VannaAgent:
             else:
                 result = asyncio.run(self.sql_runner.run_sql(args=args, context=None)) # type: ignore
                 
-            if isinstance(result, pd.DataFrame):
-                return result
-            # Si RunSqlTool (por alguna razón) no retorna DataFrame directamente
-            return pd.DataFrame(result)
+            if not isinstance(result, pd.DataFrame):
+                result = pd.DataFrame(result)
+                
+            # Sanitizar tipos de PostgreSQL (como Decimal) a tipos nativos para evitar fallos JSON en VizAgent
+            from decimal import Decimal
+            for col in result.columns:
+                result[col] = result[col].apply(lambda x: float(x) if isinstance(x, Decimal) else x)
+                
+            return result
         except Exception as e:
             # Rethrow o convertir la excepción, quien llama deberá manejar esto 
             # (Ej. en el decision_agent.run() y PipelineError)

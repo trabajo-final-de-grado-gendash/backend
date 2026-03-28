@@ -32,7 +32,7 @@ Implementar el agente decisor que orquesta la generación de dashboards a travé
 | III. Sandbox Code Execution | ✅ PASS | El decision_agent no ejecuta código generado; delega a viz_agent que ya tiene sandbox. SQL se valida con allowlist |
 | IV. Fail-Fast & Descriptive Errors | ✅ PASS | Custom exceptions + structlog + error payloads con `error_type`, `message`, `context` |
 | V. Python Code Standards | ✅ PASS | ruff, mypy, type hints, Pydantic v2, uv |
-| VI. Design Patterns & SOLID | ✅ PASS | Protocol classes para agentes, Dependency Inversion en orchestrator, Strategy para routing |
+| VI. Design Patterns & SOLID | ✅ PASS | Protocol classes para agentes, Dependency Inversion en el Agent, Strategy para routing |
 | VII. Testing Strategy | ✅ PASS | pytest + conftest + unit (mocked LLM) + integration (real Gemini) + examples/ smoke test |
 
 ### Post-Design Re-Check ✅
@@ -40,7 +40,7 @@ Implementar el agente decisor que orquesta la generación de dashboards a travé
 | Principle | Status | Notes |
 |---|---|---|
 | I. Agent-First Architecture | ✅ PASS | decision_agent y vanna_agent tienen `examples/` como smoke test standalone |
-| II. Single-Responsibility | ✅ PASS | Orchestrator separado de agentes; API solo rutea HTTP → orchestrator |
+| II. Single-Responsibility | ✅ PASS | API solo rutea HTTP hacia los servicios inyectados |
 | III. Sandbox Code Execution | ✅ PASS | SQL validation layer (`sqlparse`) como barrera obligatoria antes de toda ejecución |
 | IV. Fail-Fast & Descriptive Errors | ✅ PASS | Exception hierarchy: `AgentError` → `SQLValidationError`, `LLMError`, `PipelineError` |
 | V. Python Code Standards | ✅ PASS | Config via Pydantic `BaseSettings`, no `os.getenv()` sueltos |
@@ -109,12 +109,7 @@ backend/
 │   └── examples/
 │       └── basic_usage.py             # Console smoke test
 │
-├── orchestrator/                      # NUEVO: Capa de integración/wrapper
-│   ├── __init__.py
-│   ├── protocols.py                   # Protocol classes (abstracciones de agentes)
-│   ├── pipeline.py                    # Pipeline orchestration (coordina agentes)
-│   └── exceptions.py                 # Pipeline-level exceptions
-│
+
 ├── api/                               # NUEVO: FastAPI REST API
 │   ├── pyproject.toml                 # Dependencias: fastapi, uvicorn, sqlalchemy, asyncpg, alembic
 │   ├── .env.example
@@ -138,7 +133,7 @@ backend/
 │   │       │   ├── __init__.py
 │   │       │   ├── session_service.py     # Session + message persistence
 │   │       │   ├── result_service.py      # Generation result persistence
-│   │       │   └── pipeline_service.py    # Orchestration bridge (API → orchestrator)
+│   │       │   └── pipeline_service.py    # Orchestration bridge (API → decision_agent)
 │   │       └── db/
 │   │           ├── __init__.py
 │   │           ├── engine.py          # Async engine + session factory
@@ -166,7 +161,7 @@ backend/
 └── specs/                             # Feature specs
 ```
 
-**Structure Decision**: Se sigue el patrón Agent-First (Principio I) con cada agente en su propio directorio raíz (`decision_agent/`, `vanna_agent/`, `viz_agent/`). La configuración de Vanna existente en `test_vanna.py` se reorganiza dentro de `vanna_agent/` para cumplir con Principio I. La API y el orchestrator son módulos separados para mantener la separación de concerns. El orchestrator actúa como puente entre la API y los agentes, cumpliendo con Dependency Inversion (Principio VI).
+**Structure Decision**: Se sigue el patrón Agent-First (Principio I) con el agente en su propio directorio raíz (`decision_agent/`). La API y los agentes son módulos separados para mantener la separación de concerns. El DecisionAgent expone protocolos (Dependency Inversion, Principio VI) para desacoplar a Vanna de la lógica local.
 
 ## Architecture Overview
 
@@ -176,9 +171,7 @@ graph TD
     
     API -->|1. Get/Create Session| DB[(PostgreSQL<br/>genbi_db)]
     API -->|2. Fetch History| DB
-    API -->|3. Invoke Pipeline| ORCH[Orchestrator]
-    
-    ORCH -->|Classify Intent| DA[Decision Agent<br/>Gemini 2.5 Flash]
+    API -->|3. Invoke DecisionAgent| DA[Decision Agent<br/>Gemini 2.5 Flash]
     
     DA -->|valid_and_clear| PIPELINE[Data Pipeline]
     DA -->|clarification| RESP_CLAR[Clarification Response]
@@ -198,7 +191,6 @@ graph TD
 
     style DA fill:#4CAF50,color:#fff
     style API fill:#2196F3,color:#fff
-    style ORCH fill:#FF9800,color:#fff
     style SQLVAL fill:#f44336,color:#fff
 ```
 
@@ -234,14 +226,6 @@ graph TD
 
 **Nota**: Internamente reutiliza la configuración de Vanna v2 usando Gemini (`GeminiLlmService` + `PostgresRunner` + Chinook). No reescribimos Vanna — solo la organizamos como agente standalone.
 
-### Orchestrator (`orchestrator/`)
-
-**Responsibility**: Abstraer la instanciación y coordinación de agentes.
-
-**Componentes**:
-- `protocols.py`: `Text2SQLAgent`, `VizAgentProtocol`, `DecisionAgentProtocol` (Python `Protocol` classes)
-- `pipeline.py`: `Pipeline` class que coordina el flujo completo
-
 ### API (`api/`)
 
 **Responsibility**: HTTP layer, persistencia de sesiones/mensajes/resultados.
@@ -249,7 +233,7 @@ graph TD
 **La API NO contiene lógica de agentes**. Solo:
 1. Recibe HTTP request
 2. Gestiona sesiones y contexto (BD)
-3. Invoca orchestrator
+3. Invoca a pipeline_service (Decision Agent)
 4. Persiste resultados
 5. Retorna HTTP response
 

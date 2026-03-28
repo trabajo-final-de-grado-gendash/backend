@@ -117,18 +117,17 @@
 
 ---
 
-## R-008: Wrapper de Agentes (Orquestación)
+## R-008: Patrón de Orquestación Interna
 
-**Decision**: Módulo `orchestrator/` en la raíz con Protocol classes para `VizAgent`, `Text2SQLAgent` y `DecisionAgent`. La API importa solo del orchestrator, nunca directamente de los agentes.
+**Decision**: Se absorbe la capa de orquestación dentro del `DecisionAgent`. Las dependencias (Vanna, Viz) se inyectan localmente a través de la API usando `decision_agent/protocols.py`.
 
 **Rationale**:
-- Principio VI (Dependency Inversion): la API depende de abstracciones, no de implementaciones concretas.
-- FR-013 exige un wrapper que permita instanciar y coordinar los 3 agentes de forma desacoplada.
-- US-4 requiere que los agentes sean intercambiables sin modificar el código del pipeline.
+- Principio I y VI se satisfacen: El agente depende de abstracciones, pero la coordinación ocurre localmente en su propio módulo, no en una carpeta externa `orchestrator/`.
+- US-4 se cumple reduciendo una capa intermedia: los agentes siguen siendo intercambiables, pero se inyectan directo al Agente Decisor al inicializarlo.
+- Reduce el over-engineering de tener un modelo `Pipeline` que solo wrappeaba al `DecisionAgent`.
 
 **Alternatives considered**:
-- Importar agentes directamente desde la API: Viola Principio I y VI.
-- Registry pattern (diccionario de agentes): Más flexible pero innecesario para 3 agentes conocidos; se puede agregar después.
+- Carpeta `orchestrator/` dedicada: Descartada por ser over-engineering transitorio; la lógica perteniente naturalmente a `DecisionAgent.run()`.
 
 ---
 

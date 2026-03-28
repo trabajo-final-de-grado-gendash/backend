@@ -11,7 +11,7 @@
 
 **Alcance MVP**: Fase 3 (US1 — pipeline end-to-end).  
 Orden de ejecución: Fase 1 → Fase 2 → Fase 3 (US1) → Fase 4 (US2) → Fase 5 (US3 API) → Fase 6 (US4 Wrapper) → Fase 7 (US5 Persistencia) → Fase 8 (US6 Historial) → Fase 9 (Polish).  
-Las historias 3, 5 y 6 comparten el módulo `api/`; US4 (orchestrator) debe completarse antes de que US3 pueda conectarse vía `pipeline_service`.
+Las historias 3, 5 y 6 comparten el módulo `api/`; US4 (integración) debe completarse antes de que US3 pueda conectarse vía `pipeline_service`.
 
 ---
 
@@ -22,8 +22,8 @@ Fase 1 (Setup)
   └── Fase 2 (Foundational: DB engine, modelos base, jerarquía de excepciones, logging)
         ├── Fase 3: US1 — Pipeline end-to-end (núcleo decision_agent + vanna_agent)
         │     └── Fase 4: US2 — Routing inteligente (extiende decision_agent)
-        ├── Fase 5: US3 — API REST (requiere orchestrator de Fase 6)
-        ├── Fase 6: US4 — Orchestrator/Wrapper (requiere agentes de Fase 3)
+        ├── Fase 5: US3 — API REST (requiere servicios de Fase 6)
+        ├── Fase 6: US4 — Servicios de Integración (requiere agentes de Fase 3)
         ├── Fase 7: US5 — Persistencia de resultados (requiere DB y API de Fase 5)
         └── Fase 8: US6 — Historial conversacional (requiere DB, API y modelo de sesión)
 Fase 9 (Polish): luego de todas las historias de usuario
@@ -37,7 +37,7 @@ Fase 9 (Polish): luego de todas las historias de usuario
 
 - [X] T001 Crear la estructura del paquete `decision_agent/` con `pyproject.toml`, `src/decision_agent/__init__.py`, `tests/__init__.py`, `tests/conftest.py`, `examples/basic_usage.py` y `.env.example` según plan.md §Estructura del Proyecto
 - [X] T002 Crear la estructura del paquete `vanna_agent/` con `pyproject.toml`, `src/vanna_agent/__init__.py`, `tests/__init__.py`, `tests/conftest.py`, `examples/basic_usage.py` y `.env.example` según plan.md §Estructura del Proyecto
-- [X] T003 Crear el módulo `orchestrator/` con `__init__.py`, `protocols.py`, `pipeline.py`, `exceptions.py` según plan.md §Estructura del Proyecto
+- [X] T003 REFACTOR: Se absorbió la capa orchestrator dentro del `DecisionAgent` para seguir estricamente el Agent-First pattern.
 - [X] T004 Crear la estructura del paquete `api/` con `pyproject.toml`, `src/api/__init__.py`, `alembic/`, `alembic/env.py`, `alembic/versions/`, `tests/__init__.py`, `tests/conftest.py` y `.env.example` según plan.md §Estructura del Proyecto
 
 ---
@@ -92,24 +92,24 @@ Fase 9 (Polish): luego de todas las historias de usuario
 > Objetivo: Aplicación FastAPI con endpoints `/generate`, `/health`, `/sessions/{id}/history`, `/results/{id}` funcionando end-to-end.  
 > Test independiente: Usar `curl` o llamadas HTTP con pytest para verificar que todos los endpoints retornan los códigos de estado y shapes de JSON correctos según contracts/api-v1.md.
 
-- [ ] T027 [US3] Implementar `api/src/api/main.py`: factory de la app FastAPI con `lifespan` gestionando arranque/parada del async engine de BD; middleware CORS con orígenes configurables; incluir todos los routers; descripción de OpenAPI (FR-012, plan.md §API)
-- [ ] T028 [US3] Implementar `api/src/api/dependencies.py`: dependencia FastAPI `get_db_session()` que yield una `AsyncSession`; dependencia para inyección de `pipeline_service` (plan.md §API)
-- [ ] T029 [US3] Implementar `api/src/api/routes/health.py`: `GET /api/v1/health` que pinga decision_agent, vanna_agent, viz_agent, database, chinook_db; agrega el estado como `healthy`/`degraded`/`unhealthy`; `latency_ms` por componente; debe responder en < 1s (FR-010, SC-008, contracts/api-v1.md §GET /health)
-- [ ] T030 [US3] Implementar `api/src/api/routes/generate.py`: `POST /api/v1/generate` aceptando `GenerateRequest`; generar `session_id` automáticamente si no se proporcionó; validar payload; llamar a `pipeline_service.run()`; retornar `GenerateResponse`; retornar HTTP 400/422 en errores de validación, 500 en errores no previstos, 503 si la BD no está disponible (FR-009, FR-011, FR-016, FR-023, contracts/api-v1.md §POST /generate)
-- [ ] T031 [US3] Implementar `api/src/api/routes/sessions.py`: `GET /api/v1/sessions/{session_id}/history` retornando todos los mensajes ordenados por `created_at ASC`; retornar 404 si la sesión no existe (FR-020, contracts/api-v1.md §GET /sessions)
-- [ ] T032 [US3] Implementar `api/src/api/routes/results.py`: `GET /api/v1/results/{result_id}` retornando `ResultResponse`; retornar 404 si no existe (FR-021, contracts/api-v1.md §GET /results)
+- [X] T027 [US3] Implementar `api/src/api/main.py`: factory de la app FastAPI con `lifespan` gestionando arranque/parada del async engine de BD; middleware CORS con orígenes configurables; incluir todos los routers; descripción de OpenAPI (FR-012, plan.md §API)
+- [X] T028 [US3] Implementar `api/src/api/dependencies.py`: dependencia FastAPI `get_db_session()` que yield una `AsyncSession`; dependencia para inyección de `pipeline_service` (plan.md §API)
+- [X] T029 [US3] Implementar `api/src/api/routes/health.py`: `GET /api/v1/health` que pinga decision_agent, vanna_agent, viz_agent, database, chinook_db; agrega el estado como `healthy`/`degraded`/`unhealthy`; `latency_ms` por componente; debe responder en < 1s (FR-010, SC-008, contracts/api-v1.md §GET /health)
+- [X] T030 [US3] Implementar `api/src/api/routes/generate.py`: `POST /api/v1/generate` aceptando `GenerateRequest`; generar `session_id` automáticamente si no se proporcionó; validar payload; llamar a `pipeline_service.run()`; retornar `GenerateResponse`; retornar HTTP 400/422 en errores de validación, 500 en errores no previstos, 503 si la BD no está disponible (FR-009, FR-011, FR-016, FR-023, contracts/api-v1.md §POST /generate)
+- [X] T031 [US3] Implementar `api/src/api/routes/sessions.py`: `GET /api/v1/sessions/{session_id}/history` retornando todos los mensajes ordenados por `created_at ASC`; retornar 404 si la sesión no existe (FR-020, contracts/api-v1.md §GET /sessions)
+- [X] T032 [US3] Implementar `api/src/api/routes/results.py`: `GET /api/v1/results/{result_id}` retornando `ResultResponse`; retornar 404 si no existe (FR-021, contracts/api-v1.md §GET /results)
 
 ---
 
-## Fase 6 — Historia de Usuario 4: Integración y Wrapper de Agentes (P3)
+## Fase 6 — Historia de Usuario 4: Servicios de Integración (P3)
 
-> Objetivo: Orchestrator con abstracciones Protocol que permiten intercambiar agentes sin modificar el código del pipeline.  
-> Test independiente: Instanciar cada agente a través del orchestrator, reemplazar la implementación de viz_agent y verificar que el pipeline sigue produciendo el output correcto.
+> Objetivo: Interfaz limpia con abstracciones Protocol que permiten intercambiar agentes sin modificar el código interno.
+> Test independiente: Instanciar cada agente y pasarlo vía inyección de dependencias para verificar que el pipeline produce output correcto.
 
-- [ ] T033 [US4] Implementar `orchestrator/protocols.py`: `Text2SQLAgent`, `VizAgentProtocol`, `DecisionAgentProtocol` como clases Python `Protocol` con firmas de métodos tipadas que coincidan con los entry-points reales de cada agente (plan.md §Orchestrator, FR-013, NFR-004)
-- [ ] T034 [US4] Implementar `orchestrator/pipeline.py`: clase `Pipeline` que cumple con `DecisionAgentProtocol`; el constructor recibe implementaciones de `Text2SQLAgent` y `VizAgentProtocol` por DI; `run()` delega a `DecisionAgent` con los agentes inyectados; lanza `PipelineError` ante fallos inesperados (plan.md §Orchestrator, FR-013)
-- [ ] T035 [US4] Implementar `orchestrator/exceptions.py`: `PipelineError` (envuelve errores de nivel inferior con contexto de la etapa del pipeline) (plan.md §Orchestrator)
-- [ ] T036 [US4] Implementar `api/src/api/services/pipeline_service.py`: puente entre las rutas de la API y `orchestrator.pipeline.Pipeline`; instancia `VannaAgent` y `DecisionAgent` vía Protocol; expone `run(query, session_id, conversation_history) -> DecisionAgentOutput`; propaga errores como excepciones compatibles con HTTP (plan.md §API §services, FR-013)
+- [X] T033 [US4] Implementar `decision_agent/src/decision_agent/protocols.py`: `Text2SQLAgent`, `VizAgentProtocol`, `DecisionAgentProtocol` como clases Python `Protocol` con firmas de métodos tipadas que coincidan con los entry-points (FR-013, NFR-004)
+- [X] T034 [US4] REFACTOR: Lógica de `Pipeline` unificada en `DecisionAgent.run()`
+- [X] T035 [US4] REFACTOR: `PipelineError` centralizado en `decision_agent/exceptions.py`
+- [X] T036 [US4] Implementar `api/src/api/services/pipeline_service.py`: puente entre las rutas de la API y `DecisionAgent`; instancia `VannaAgent` y `DecisionAgent`; propaga errores como excepciones HTTP (FR-013)
 
 ---
 
@@ -144,11 +144,11 @@ Fase 9 (Polish): luego de todas las historias de usuario
 - [ ] T045 [P] Agregar `api/src/api/routes/__init__.py` registrando todos los prefijos de rutas bajo `/api/v1`; verificar que el schema OpenAPI refleje todos los endpoints con ejemplos de request/response por cada contrato (NFR-005)
 - [ ] T046 [P] Agregar manejadores globales de excepciones HTTP en `api/src/api/main.py` para `SQLValidationError` → 400, `PipelineError` → 500, errores de conexión a BD → 503 con cuerpo JSON estructurado en formato `error_type/message/context` (FR-011, contracts/api-v1.md §Error Responses)
 - [ ] T047 Agregar manejo de timeout en `decision_agent/src/decision_agent/agent.py`: aplicar límite de < 15s de duración total del pipeline; lanzar `PipelineError(error_type="timeout")` si se supera (NFR-001)
-- [ ] T048 Revisar y verificar que todas las llamadas a `structlog` en `decision_agent/`, `vanna_agent/`, `orchestrator/` y `api/` emitan los campos: `agent`, `stage`, `session_id`, `elapsed_ms`, y en caso de error: `error_type`, `context` (FR-008, NFR-003, SC-007)
+- [ ] T048 Revisar y verificar que todas las llamadas a `structlog` en `decision_agent/`, `vanna_agent/` y `api/` emitan los campos: `agent`, `stage`, `session_id`, `elapsed_ms`, y en caso de error: `error_type`, `context` (FR-008, NFR-003, SC-007)
 - [ ] T049 Implementar tests de integración y unitarios para `decision_agent` (`test_classifier.py`, `test_sql_validator.py`, `test_agent.py`) con pytest, usando mocks para LLM (Constitution Principle VII).
 - [ ] T050 Implementar tests para `vanna_agent` (`test_agent.py`): tests unitarios rápidos mockeando el LLM y base de datos, además de un test de integración E2E hacia la BD PostgreSQL (Chinook) sin mockear, marcado con `@pytest.mark.integration` (FR-015, Constitution Principle VII).
 - [ ] T051 Implementar tests de endpoints de la API (`test_generate.py`, `test_health.py`, `test_sessions.py`, `test_results.py`) con FastAPI TestClient.
-- [ ] T052 Ejecutar validaciones de código `mypy` y `ruff` sobre `decision_agent/`, `vanna_agent/`, `orchestrator/` y `api/` asegurando 0 errores (Constitution Principle V).
+- [ ] T052 Ejecutar validaciones de código `mypy` y `ruff` sobre `decision_agent/`, `vanna_agent/` y `api/` asegurando 0 errores (Constitution Principle V).
 - [ ] T053 Asegurar la generación del reporte de cobertura `pytest --cov` logrando ≥ 80% antes de dar por completo el sprint (Constitution Principle VII).
 
 ---
@@ -161,7 +161,7 @@ T001-T004 (Setup)
     → T016-T023 (US1 núcleo del pipeline)        ← MVP
       → T024-T026 (US2 routing)
     → T027-T032 (US3 endpoints de la API)
-      → T033-T036 (US4 orchestrator)              ← rutas US3 se conectan vía pipeline_service
+      → T033-T036 (US4 integración)              ← rutas US3 se conectan vía pipeline_service
       → T037-T039 (US5 persistencia de resultados) ← requiere rutas US3 + BD
       → T040-T042 (US6 conversación)              ← requiere rutas US3 + BD
     → T043-T053 (Polish y Tests)
@@ -187,7 +187,7 @@ Secuencial: T021 (agent.py orquesta todo lo anterior), T022 (extiende agent.py),
 
 ### Fase 5 US3 + Fase 6 US4
 ```
-Paralelo: T033, T034, T035 (protocols del orchestrator, sin dependencias de la API)
+Paralelo: T033, T034, T035 (refactors de integración, sin dependencias de la API)
 Paralelo: T027, T028, T029 (main.py, deps, ruta health — sin dependencia de pipeline_service)
 Secuencial: T036 (pipeline_service luego de T033-T035), luego T030, T031, T032 (rutas que usan pipeline_service)
 ```
@@ -207,7 +207,7 @@ Todas las 53 tareas siguen el formato: `- [ ] T### [P?] [US?] Descripción con r
 | Fase 3 — US1 End-to-End | US1 (P1) | 8 | 4 |
 | Fase 4 — US2 Routing | US2 (P2) | 3 | 1 |
 | Fase 5 — US3 API REST | US3 (P2) | 6 | 2 |
-| Fase 6 — US4 Orchestrator | US4 (P3) | 4 | 1 |
+| Fase 6 — US4 Integración | US4 (P3) | 4 | 1 |
 | Fase 7 — US5 Persistencia | US5 (P2) | 3 | 0 |
 | Fase 8 — US6 Historial | US6 (P2) | 3 | 0 |
 | Fase 9 — Polish y Tests | — | 11 | 7 |

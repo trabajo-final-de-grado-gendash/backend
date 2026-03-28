@@ -21,6 +21,7 @@ from decision_agent.models import (
 )
 from decision_agent.prompts.refinement_prompt import format_refinement_prompt
 from decision_agent.sql_validator import SQLValidator
+from decision_agent.protocols import Text2SQLAgent, VizAgentProtocol
 
 
 class DecisionAgent:
@@ -34,13 +35,13 @@ class DecisionAgent:
     def __init__(
         self,
         settings: Settings | None = None,
-        text2sql_agent: Any = None,
-        viz_agent: Any = None,
+        text2sql_agent: Text2SQLAgent | None = None,
+        viz_agent: VizAgentProtocol | None = None,
     ) -> None:
         """
         Inyectando dependencias externas. En entorno standalone creará
         instancias dummy o reales importándolas localmente si es necesario, 
-        pero está preparado para recibir abstracciones (Protocol) desde Orchestrator.
+        pero está preparado para recibir abstracciones (Protocol) desde la API.
         """
         self.settings = settings or Settings()  # type: ignore[call-arg]
         self.log = get_logger("decision_agent", stage="init")

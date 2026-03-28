@@ -22,13 +22,6 @@ depends_on: None = None
 
 
 def upgrade() -> None:
-    # --- Enums ---
-    message_role_enum = postgresql.ENUM("user", "system", name="message_role_enum")
-    response_type_enum = postgresql.ENUM(
-        "visualization", "clarification", "message", name="response_type_enum"
-    )
-    message_role_enum.create(op.get_bind())
-    response_type_enum.create(op.get_bind())
 
     # --- sessions ---
     op.create_table(
@@ -55,7 +48,7 @@ def upgrade() -> None:
         sa.Column("session_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column(
             "role",
-            sa.Enum("user", "system", name="message_role_enum", create_type=False),
+            sa.Enum("user", "system", name="message_role_enum"),
             nullable=False,
         ),
         sa.Column("content", sa.Text, nullable=False),
@@ -66,7 +59,6 @@ def upgrade() -> None:
                 "clarification",
                 "message",
                 name="response_type_enum",
-                create_type=False,
             ),
             nullable=True,
         ),

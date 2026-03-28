@@ -13,29 +13,7 @@ from typing import Any, Optional
 
 from pydantic import BaseModel, Field
 
-
-# ---------------------------------------------------------------------------
-# Shared enums
-# ---------------------------------------------------------------------------
-
-
-class ResponseType(str, Enum):
-    VISUALIZATION = "visualization"
-    CLARIFICATION = "clarification"
-    MESSAGE = "message"
-
-
-class IntentCategory(str, Enum):
-    VALID_AND_CLEAR = "valid_and_clear"
-    VALID_BUT_AMBIGUOUS = "valid_but_ambiguous"
-    OUT_OF_SCOPE = "out_of_scope"
-    CONVERSATIONAL = "conversational"
-
-
-class MessageRole(str, Enum):
-    USER = "user"
-    SYSTEM = "system"
-
+from decision_agent.models import IntentCategory, MessageRole, ResponseType
 
 # ---------------------------------------------------------------------------
 # Request models

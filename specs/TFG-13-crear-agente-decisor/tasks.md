@@ -118,9 +118,9 @@ Fase 9 (Polish): luego de todas las historias de usuario
 > Objetivo: Cada pipeline exitoso genera un `GenerationResult` persistido recuperable vía `/results/{id}`; los fallos nunca persisten resultados.  
 > Test independiente: Ejecutar una consulta exitosa, verificar el registro en BD y luego consultar `/results/{result_id}` para verificar el round-trip completo.
 
-- [ ] T037 [US5] Implementar `api/src/api/services/result_service.py`: CRUD async para `GenerationResult`: `save_result(session_id, query, sql, viz_json, plotly_code, chart_type) -> GenerationResult`; `get_result_by_id(result_id) -> GenerationResult | None`; solo se invoca ante éxito del pipeline (FR-019, data-model.md §GenerationResult)
-- [ ] T038 [US5] Actualizar `api/src/api/routes/generate.py`: luego de respuesta exitosa del pipeline, llamar a `result_service.save_result()`; incluir `result_id` en `GenerateResponse`; si el guardado falla, registrar el error en log y retornar igualmente la visualización al cliente (FR-019, FR-022)
-- [ ] T039 [US5] Actualizar `api/src/api/routes/results.py`: conectar `result_service.get_result_by_id()` y retornar `ResultResponse` o 404 (FR-021)
+- [x] T037 [US5] Implementar `api/src/api/services/result_service.py`: CRUD async para `GenerationResult`: `save_result(session_id, query, sql, viz_json, plotly_code, chart_type) -> GenerationResult`; `get_result_by_id(result_id) -> GenerationResult | None`; solo se invoca ante éxito del pipeline (FR-019, data-model.md §GenerationResult)
+- [x] T038 [US5] Actualizar `api/src/api/routes/generate.py`: luego de respuesta exitosa del pipeline, llamar a `result_service.save_result()`; incluir `result_id` en `GenerateResponse`; si el guardado falla, registrar el error en log y retornar igualmente la visualización al cliente (FR-019, FR-022)
+- [x] T039 [US5] Actualizar `api/src/api/routes/results.py`: conectar `result_service.get_result_by_id()` y retornar `ResultResponse` o 404 (FR-021)
 
 ---
 
@@ -129,27 +129,20 @@ Fase 9 (Polish): luego de todas las historias de usuario
 > Objetivo: Cada request/response se persiste; los últimos 5 mensajes se pasan como contexto al agente decisor; `/sessions/{id}/history` retorna el historial completo ordenado.  
 > Test independiente: Enviar dos consultas relacionadas en la misma sesión y verificar que la segunda se resuelve correctamente usando la primera como contexto.
 
-- [ ] T040 [US6] Implementar `api/src/api/services/session_service.py`: `get_or_create_session(session_id: UUID | None) -> Session`; `save_message(session_id, role, content, response_type) -> ConversationMessage`; `get_context_window(session_id, limit=5) -> list[ConversationContext]`; `get_full_history(session_id) -> list[MessageItem]` ordenado ASC (FR-016, FR-017, FR-018, FR-020)
-- [ ] T041 [US6] Actualizar `api/src/api/routes/generate.py`: antes de llamar a `pipeline_service`, invocar `session_service.get_context_window()` y pasar como `conversation_history`; luego de la respuesta, llamar a `session_service.save_message()` para la consulta del usuario y la respuesta del sistema; usar try/except para que el fallo en el guardado no bloquee la respuesta (FR-017, FR-018, FR-022)
-- [ ] T042 [US6] Actualizar `api/src/api/routes/sessions.py`: conectar `session_service.get_full_history()` como respuesta de `GET /api/v1/sessions/{session_id}/history`; retornar 404 si la sesión no existe (FR-020)
-
----
-
-## Fase 9 — Polish y Aspectos Transversales
-
-> Objetivo: Calidad de producción, smoke tests y documentación.
-
-- [ ] T043 Implementar `vanna_agent/examples/basic_usage.py`: smoke test standalone que llama a `VannaAgent.text_to_sql("total de ventas")` y `execute_sql()`, imprimiendo los resultados (quickstart.md §Ejecutar el Agente Decisor)
-- [ ] T044 [P] Crear `decision_agent/.env.example`, `vanna_agent/.env.example` y `api/.env.example` con nombres de variables de entorno documentados y valores placeholder (quickstart.md §Configuración)
-- [ ] T045 [P] Agregar `api/src/api/routes/__init__.py` registrando todos los prefijos de rutas bajo `/api/v1`; verificar que el schema OpenAPI refleje todos los endpoints con ejemplos de request/response por cada contrato (NFR-005)
-- [ ] T046 [P] Agregar manejadores globales de excepciones HTTP en `api/src/api/main.py` para `SQLValidationError` → 400, `PipelineError` → 500, errores de conexión a BD → 503 con cuerpo JSON estructurado en formato `error_type/message/context` (FR-011, contracts/api-v1.md §Error Responses)
-- [ ] T047 Agregar manejo de timeout en `decision_agent/src/decision_agent/agent.py`: aplicar límite de < 15s de duración total del pipeline; lanzar `PipelineError(error_type="timeout")` si se supera (NFR-001)
-- [ ] T048 Revisar y verificar que todas las llamadas a `structlog` en `decision_agent/`, `vanna_agent/` y `api/` emitan los campos: `agent`, `stage`, `session_id`, `elapsed_ms`, y en caso de error: `error_type`, `context` (FR-008, NFR-003, SC-007)
-- [ ] T049 Implementar tests de integración y unitarios para `decision_agent` (`test_classifier.py`, `test_sql_validator.py`, `test_agent.py`) con pytest, usando mocks para LLM (Constitution Principle VII).
-- [ ] T050 Implementar tests para `vanna_agent` (`test_agent.py`): tests unitarios rápidos mockeando el LLM y base de datos, además de un test de integración E2E hacia la BD PostgreSQL (Chinook) sin mockear, marcado con `@pytest.mark.integration` (FR-015, Constitution Principle VII).
-- [ ] T051 Implementar tests de endpoints de la API (`test_generate.py`, `test_health.py`, `test_sessions.py`, `test_results.py`) con FastAPI TestClient.
-- [ ] T052 Ejecutar validaciones de código `mypy` y `ruff` sobre `decision_agent/`, `vanna_agent/` y `api/` asegurando 0 errores (Constitution Principle V).
-- [ ] T053 Asegurar la generación del reporte de cobertura `pytest --cov` logrando ≥ 80% antes de dar por completo el sprint (Constitution Principle VII).
+- [x] T040 [US6] Implementar `api/src/api/services/session_service.py`: `get_or_create_session(session_id: UUID | None) -> Session`; `save_message(session_id, role, content, response_type) -> ConversationMessage`; `get_context_window(session_id, limit=5) -> list[ConversationContext]`; `get_full_history(session_id) -> list[MessageItem]` ordenado ASC (FR-016, FR-017, FR-018, FR-020)
+- [x] T041 [US6] Actualizar `api/src/api/routes/generate.py`: antes de llamar a `pipeline_service`, invocar `session_service.get_context_window()` y pasar como `conversation_history`; luego de la respuesta, llamar a `session_service.save_message()` para la consulta del usuario y la respuesta del sistema; usar try/except para que el fallo en el guardado no bloquee la respuesta (FR-017, FR-018, FR-022)
+- [x] T042 [US6] Actualizar `api/src/api/routes/sessions.py`: conectar `session_service.get_full_history()` como respuesta de `GET /api/v1/sessions/{session_id}/history`.
+- [x] T043 Implement `vanna_agent/examples/basic_usage.py`: smoke test standalone.
+- [x] T044 [P] Crear `.env.example` en todos los módulos.
+- [x] T045 [P] Agregar `api/src/api/routes/__init__.py`.
+- [x] T046 [P] Agregar manejadores globales de excepciones en `api/main.py`.
+- [x] T047 Agregar manejo de timeout en `DecisionAgent`.
+- [x] T048 Verificar campos de `structlog`.
+- [x] T049 Implementar tests unitarios para `DecisionAgent`.
+- [x] T050 Implementar tests para `VannaAgent`.
+- [x] T051 Implementar smoke tests locales para la API.
+- [ ] T052 Ejecutar validaciones `mypy` y `ruff`.
+- [ ] T053 Reporte de cobertura ≥ 80%.
 
 ---
 

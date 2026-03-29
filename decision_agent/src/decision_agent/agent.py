@@ -90,7 +90,22 @@ class DecisionAgent:
             self.log.warning("viz_agent_not_found_standalone")
 
     def run(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
-        """Entry point orquestador principal."""
+        """Entry point orquestador principal con timeout < 15s."""
+        import concurrent.futures
+        
+        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+            future = executor.submit(self._run_internal, input_data)
+            try:
+                return future.result(timeout=14.5)
+            except concurrent.futures.TimeoutError as exc:
+                self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=14500)
+                raise PipelineError(
+                    message="El pipeline excedió el límite de tiempo de 15 segundos (timeout).",
+                    stage="timeout"
+                ) from exc
+
+    def _run_internal(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
+        """Lógica original de orquestación."""
         t0 = time.perf_counter()
         session_id_str = str(input_data.session_id) if input_data.session_id else "No-Session"
         self.log = self.log.bind(session_id=session_id_str)
@@ -129,6 +144,7 @@ class DecisionAgent:
                     # En caso de skipear clarificación, enriquecemos la metadata y procedemos como VALID_AND_CLEAR
                     metadata["clarification_skipped"] = True
                     intent.category = IntentCategory.VALID_AND_CLEAR
+
             if intent.category == IntentCategory.OUT_OF_SCOPE:
                 return DecisionAgentOutput(
                     response_type=ResponseType.MESSAGE,
@@ -151,6 +167,8 @@ class DecisionAgent:
         except Exception as e:
             elapsed = time.perf_counter() - t0
             self.log.error("decision_agent_failed", error=str(e), elapsed_ms=int(elapsed * 1000))
+            if isinstance(e, SQLValidationError):
+                raise
             raise PipelineError(f"DecisionAgent falló con error: {e}") from e
 
     def _execute_data_pipeline(self, query: str, metadata: dict[str, Any]) -> DecisionAgentOutput:
@@ -191,7 +209,9 @@ class DecisionAgent:
                 self.log.warning("pipeline_execution_failed", attempt=attempt, error=execution_error)
                 
                 # Si estamos en el último intento o es un SQLValidationError irreparable
-                if attempt == 2 or isinstance(e, SQLValidationError):
+                if isinstance(e, SQLValidationError):
+                    raise
+                if attempt == 2:
                     raise PipelineError(f"Fallo final luego de {attempt} intentos: {e}", stage="execute_sql") from e
                 
                 # 4. Reformular query usando refinement prompt

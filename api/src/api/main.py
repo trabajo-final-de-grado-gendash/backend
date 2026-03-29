@@ -23,6 +23,11 @@ async def lifespan(app: FastAPI):
 def create_app() -> FastAPI:
     settings = Settings()
     
+    from fastapi import Request
+    from fastapi.responses import JSONResponse
+    from decision_agent.exceptions import SQLValidationError, PipelineError
+    from sqlalchemy.exc import DBAPIError
+
     app = FastAPI(
         title="GenBI API",
         description="Agente Decisor y API de Orquestación para Gen BI",
@@ -39,11 +44,35 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    # Exception Handlers
+    @app.exception_handler(SQLValidationError)
+    async def sql_validation_exception_handler(request: Request, exc: SQLValidationError):
+        return JSONResponse(
+            status_code=400,
+            content={"error_type": exc.error_type, "message": exc.message, "context": exc.context}
+        )
+
+    @app.exception_handler(PipelineError)
+    async def pipeline_exception_handler(request: Request, exc: PipelineError):
+        return JSONResponse(
+            status_code=500,
+            content={"error_type": exc.error_type, "message": exc.message, "context": exc.context}
+        )
+
+    @app.exception_handler(DBAPIError)
+    async def db_exception_handler(request: Request, exc: DBAPIError):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "error_type": "database_error",
+                "message": "Fallo de conexión o consulta de base de datos.",
+                "context": {"detail": str(exc.orig) if hasattr(exc, "orig") else str(exc)}
+            }
+        )
+
     # Incluir routers
-    app.include_router(health.router)
-    app.include_router(generate.router)
-    app.include_router(sessions.router)
-    app.include_router(results.router)
+    from api.routes import api_router
+    app.include_router(api_router)
 
     return app
 

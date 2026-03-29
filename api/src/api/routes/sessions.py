@@ -1,16 +1,27 @@
 import uuid
+from typing import Any
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
-from api.models.schemas import SessionHistoryResponse, MessageItem
+from api.models.schemas import SessionHistoryResponse
+from api.dependencies import get_session_service
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
 
 @router.get("/sessions/{session_id}/history", response_model=SessionHistoryResponse)
-async def get_session_history(session_id: uuid.UUID):
+async def get_session_history(
+    session_id: uuid.UUID,
+    session_service: Any = Depends(get_session_service)
+):
     """
     Retrieve message history for a session.
     """
-    # Stub: Delegate to session_service once US6 is complete
-    # For now, return a 404 since it's not implemented yet in the MVP scope
-    raise HTTPException(status_code=404, detail="Session not found")
+    session = await session_service.get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    messages = await session_service.get_full_history(session_id)
+    return SessionHistoryResponse(
+        session_id=session_id,
+        messages=messages
+    )

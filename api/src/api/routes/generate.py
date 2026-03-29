@@ -8,7 +8,8 @@ from api.models.schemas import (
     GenerateResponse,
     ResponseType,
 )
-from api.dependencies import get_pipeline_service
+from api.dependencies import get_pipeline_service, get_result_service, get_session_service
+from decision_agent.models import MessageRole
 
 router = APIRouter(prefix="/api/v1", tags=["generate"])
 
@@ -16,17 +17,45 @@ router = APIRouter(prefix="/api/v1", tags=["generate"])
 async def generate_visualization(
     request: GenerateRequest,
     pipeline_service: Any = Depends(get_pipeline_service),
+    result_service: Any = Depends(get_result_service),
+    session_service: Any = Depends(get_session_service),
 ):
     """
     Orchestrate the pipeline and return visualization.
     """
     session_id = request.session_id or uuid.uuid4()
+    
+    # Obtener ventana de contexto
+    history = await session_service.get_context_window(session_id, limit=5)
+    
     # Llamar al pipeline orquestador
     output = pipeline_service.run(
         query=request.query,
         session_id=session_id,
-        conversation_history=None # Se llenará en la US6
+        conversation_history=history
     )
+    
+    # Save the conversation messages with try/except
+    try:
+        await session_service.save_message(
+            session_id=session_id, 
+            role=MessageRole.USER, 
+            content=request.query
+        )
+        
+        # Only save system messages with content (messages, clarification) or sql if visualization
+        content_to_save = output.sql if output.response_type == ResponseType.VISUALIZATION else output.message
+        
+        await session_service.save_message(
+            session_id=session_id,
+            role=MessageRole.SYSTEM,
+            content=content_to_save or "(No content)",
+            response_type=output.response_type
+        )
+    except Exception as e:
+        import structlog
+        log = structlog.get_logger("api.routes.generate")
+        log.error("failed_to_save_message", error=str(e), session_id=str(session_id))
     
     # Parse output and convert to API model GenerateResponse
     plotly_json = None
@@ -42,6 +71,23 @@ async def generate_visualization(
             plotly_code = output.viz_result.plotly_code
         elif isinstance(output.viz_result, dict):
             plotly_code = output.viz_result.get("plotly_code")
+
+    result_id = None
+    if output.response_type == ResponseType.VISUALIZATION and plotly_json:
+        try:
+            persisted_result = await result_service.save_result(
+                session_id=session_id,
+                query=request.query,
+                sql=output.sql or "",
+                viz_json=plotly_json,
+                plotly_code=plotly_code,
+                chart_type=None
+            )
+            result_id = persisted_result.id
+        except Exception as e:
+            import structlog
+            log = structlog.get_logger("api.routes.generate")
+            log.error("failed_to_save_result", error=str(e), session_id=str(session_id))
     
     return GenerateResponse(
         response_type=output.response_type.value,
@@ -50,5 +96,5 @@ async def generate_visualization(
         plotly_json=plotly_json,
         sql=output.sql,
         plotly_code=plotly_code,
-        result_id=None # Se llenará en la US5
+        result_id=result_id
     )

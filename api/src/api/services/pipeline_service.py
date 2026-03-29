@@ -71,17 +71,8 @@ class PipelineService:
         
         try:
             return self.decision_agent.run(input_data)
-        except SQLValidationError as e:
-            raise HTTPException(
-                status_code=400,
-                detail={"error_type": "SQLValidationError", "message": str(e), "context": e.context}
-            ) from e
-        except PipelineError as e:
-            stage = getattr(e, "context", {}).get("stage", "unknown")
-            raise HTTPException(
-                status_code=500,
-                detail={"error_type": "PipelineError", "message": str(e), "context": {"stage": stage, **getattr(e, "context", {})}}
-            ) from e
+        except (SQLValidationError, PipelineError):
+            raise
         except Exception as e:
             raise HTTPException(
                 status_code=500,

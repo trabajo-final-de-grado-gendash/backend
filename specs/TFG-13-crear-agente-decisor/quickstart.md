@@ -18,8 +18,17 @@ Guía rápida para levantar el entorno de desarrollo del sistema GenBI con confi
    ```
 3. **Variables Críticas**:
    Edita el nuevo archivo `.env` en la raíz con tus credenciales:
+   ```bash
+   # API & Persistencia
+   APP_DB_URL=postgresql+asyncpg://user:pass@localhost:5432/genbi_db
+
+   # Agentes & Fuente de Datos
+   SOURCE_DB_URL=postgresql://user:pass@localhost:5432/chinook
+   GEMINI_API_KEY=your_api_key_here
+   ```
    - `GEMINI_API_KEY`: Tu API Key de Google AI Studio.
-   - `DB_PASSWORD`: Password de tu Postgres local.
+   - `APP_DB_URL`: URL de conexión a la base de datos de la aplicación.
+   - `SOURCE_DB_URL`: URL de conexión a la base de datos de datos (ej: Chinook).
    - `GEMINI_MODEL`: Modelo a usar (ej: `gemini-1.5-flash`).
 
 *Nota: No es necesario crear archivos .env dentro de cada carpeta de agente, ya que todos leerán el archivo de la raíz automáticamente.*

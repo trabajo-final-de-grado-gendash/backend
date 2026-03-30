@@ -17,8 +17,8 @@ import plotly.express as px
 
 @pytest.fixture
 def mock_config():
-    """Config mockeado"""
-    return Config(
+    """Settings mockeado"""
+    return Settings(
         gemini_api_key="test_key",
         log_dir="test_logs",
         max_correction_attempts=3

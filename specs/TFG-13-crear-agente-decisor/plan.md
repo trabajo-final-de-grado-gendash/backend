@@ -10,13 +10,13 @@ Implementar el agente decisor que orquesta la generación de dashboards a travé
 ## Technical Context
 
 **Language/Version**: Python ≥ 3.11
-**Primary Dependencies**: FastAPI, SQLAlchemy 2.0 (async), asyncpg, google-genai, Pydantic v2, sqlparse, structlog, Alembic, uvicorn
-**Storage**: PostgreSQL (BD de persistencia para sessions/messages/results — separada de Chinook)
+**Primary Dependencies**: FastAPI, SQLAlchemy 2.0 (async), asyncpg, google-genai, Pydantic v2, pydantic-settings, sqlparse, structlog, Alembic, uvicorn
+**Storage**: PostgreSQL (BD de persistencia para sessions/messages/results — separada de la fuente de datos)
 **Testing**: pytest + pytest-cov + pytest-mock
 **Target Platform**: Linux/macOS server (entorno local Sprint 2)
 **Project Type**: Web service (API REST) + agent modules
 **Performance Goals**: Pipeline completo < 15s (p90), 5 requests concurrentes (NFR-001, NFR-002)
-**Constraints**: Sin autenticación este sprint. Solo SELECT contra Chinook. Ventana de contexto = 5 mensajes.
+**Constraints**: Sin autenticación este sprint. Solo SELECT contra la base de datos de origen. Ventana de contexto = 5 mensajes.
 **Scale/Scope**: Entorno local de desarrollo, ~30 consultas de prueba end-to-end (SC-005)
 
 ## Constitution Check
@@ -151,10 +151,10 @@ backend/
 │       ├── test_sessions.py
 │       └── test_results.py
 │
-├── viz_agent/                         # YA EXISTENTE (no se modifica)
+├── viz_agent/                         # REFACTORIZADO: Modernizado para usar Pydantic Settings
 │   ├── src/viz_agent/
 │   │   ├── agent.py
-│   │   ├── models.py
+│   │   ├── config.py                  # Pydantic Settings unificado
 │   │   └── ...
 │   └── tests/
 │

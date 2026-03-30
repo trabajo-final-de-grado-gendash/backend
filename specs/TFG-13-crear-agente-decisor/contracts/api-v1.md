@@ -34,7 +34,8 @@ Endpoint principal: recibe consulta en lenguaje natural, orquesta el pipeline y 
   "message": null,
   "plotly_json": { "data": [...], "layout": {...} },
   "sql": "SELECT genre, SUM(total) FROM invoices GROUP BY genre",
-  "plotly_code": "import plotly.express as px\n..."
+  "plotly_code": "import plotly.express as px\n...",
+  "chart_type": "bar"
 }
 ```
 
@@ -251,6 +252,6 @@ Recuperar un resultado de visualización guardado.
 
 | `response_type` | Trigger | Contains |
 |---|---|---|
-| `"visualization"` | Pipeline exitoso | `plotly_json`, `sql`, `result_id`, `plotly_code` |
+| `"visualization"` | Pipeline exitoso | `plotly_json`, `sql`, `result_id`, `plotly_code`, `chart_type` |
 | `"clarification"` | Consulta ambigua / múltiples intenciones | `message` con pregunta de seguimiento |
 | `"message"` | Fuera de alcance / saludo / error descriptivo | `message` con texto plano |

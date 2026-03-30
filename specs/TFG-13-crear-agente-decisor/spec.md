@@ -294,7 +294,7 @@ El sistema mantiene el historial de mensajes de cada sesión de usuario en base 
 - **FR-022**: El fallo de persistencia en BD NO DEBE interrumpir la respuesta al cliente; el sistema DEBE operar en modo degradado y registrar el fallo en el log
 
 - **FR-023**: La respuesta del endpoint `/generate` DEBE indicar su tipo mediante un campo `response_type` con tres valores posibles:
-  - `"visualization"`: el pipeline produjo un gráfico válido
+  - `"visualization"`: el pipeline produjo un gráfico válido. En este caso, la respuesta debe incluir el campo `chart_type` indicando el tipo de gráfico sugerido (ej: "bar", "line", "pie").
   - `"clarification"`: el agente necesita más información antes de continuar (consulta ambígua o múLTiples intenciones)
   - `"message"`: el agente retorna texto plano sin visualización (consulta fuera de alcance, saludo, error descriptivo)
   

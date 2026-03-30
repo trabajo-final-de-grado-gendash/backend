@@ -4,17 +4,17 @@ import pandas as pd
 import sqlite3
 from viz_agent.agent import VizAgent
 from viz_agent.models import VizAgentInput
-from viz_agent.config import Config
+from viz_agent.config import Settings
 
 
 def main():
     """Ejemplo básico de uso del VizAgent"""
     
     # 1. Cargar configuración
-    config = Config.from_env()
+    settings = Settings()
     
     # Verificar que tenemos API key
-    if not config.gemini_api_key:
+    if not settings.GEMINI_API_KEY:
         print("❌ Error: GEMINI_API_KEY no configurada")
         print("Por favor, configura tu API key en el archivo .env")
         return

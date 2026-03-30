@@ -1,24 +1,32 @@
 # viz_agent/config.py
 
-import os
-from dataclasses import dataclass
-from dotenv import load_dotenv
-
-load_dotenv()
+from __future__ import annotations
+from pathlib import Path
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-@dataclass
-class Config:
-    """Configuración del agente"""
-    gemini_api_key: str
-    log_dir: str = "logs"
-    max_correction_attempts: int = 5
+class Settings(BaseSettings):
+    """
+    Configuración del agente de visualización con Pydantic.
     
-    @classmethod
-    def from_env(cls):
-        """Carga configuración desde variables de entorno"""
-        return cls(
-            gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
-            log_dir=os.getenv("LOG_DIR", "logs"),
-            max_correction_attempts=int(os.getenv("MAX_CORRECTION_ATTEMPTS", "5"))
-        )
+    Busca variables en orden:
+    1. .env local
+    2. .env en la raíz de viz_agent
+    3. .env en la raíz de backend/ (maestro)
+    """
+    
+    model_config = SettingsConfigDict(
+        env_file=[
+            ".env",
+            str(Path(__file__).resolve().parent.parent.parent / ".env"),
+            str(Path(__file__).resolve().parent.parent.parent.parent / ".env")
+        ],
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
+
+    GEMINI_API_KEY: str
+    GEMINI_MODEL: str = "gemini-1.5-flash"
+    VIZ_LOG_DIR: str = "logs"
+    MAX_CORRECT_ATTEMPTS: int = 5

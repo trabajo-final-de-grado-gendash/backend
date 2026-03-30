@@ -24,7 +24,7 @@ llm = GeminiLlmService(
 
 db_tool = RunSqlTool(
     sql_runner=PostgresRunner(
-        connection_string=os.getenv("CHINOOK_DB_URL")
+        connection_string=os.getenv("SOURCE_DB_URL")
     )
 )
 

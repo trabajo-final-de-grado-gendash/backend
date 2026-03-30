@@ -72,6 +72,13 @@ async def generate_visualization(
         elif isinstance(output.viz_result, dict):
             plotly_code = output.viz_result.get("plotly_code")
 
+    chart_type = None
+    if output.viz_result:
+        if hasattr(output.viz_result, "chart_type"):
+            chart_type = output.viz_result.chart_type
+        elif isinstance(output.viz_result, dict):
+            chart_type = output.viz_result.get("chart_type")
+
     result_id = None
     if output.response_type == ResponseType.VISUALIZATION and plotly_json:
         try:
@@ -81,7 +88,7 @@ async def generate_visualization(
                 sql=output.sql or "",
                 viz_json=plotly_json,
                 plotly_code=plotly_code,
-                chart_type=None
+                chart_type=chart_type
             )
             result_id = persisted_result.id
         except Exception as e:
@@ -96,5 +103,6 @@ async def generate_visualization(
         plotly_json=plotly_json,
         sql=output.sql,
         plotly_code=plotly_code,
+        chart_type=chart_type,
         result_id=result_id
     )

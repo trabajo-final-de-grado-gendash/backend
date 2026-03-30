@@ -1,6 +1,7 @@
 # viz_agent/agent.py
 
 import time
+import json
 from typing import Optional
 import pandas as pd
 from .models import (
@@ -14,20 +15,20 @@ from .analyzer import DataFrameAnalyzer
 from .gemini_client import GeminiClient
 from .validator import CodeValidator
 from .logger import VizAgentLogger
-from .config import Config
+from .config import Settings
 
 
 class VizAgent:
     """Agente de visualización principal"""
     
-    def __init__(self, config: Config):
+    def __init__(self, config: Settings):
         self.config = config
         self.analyzer = DataFrameAnalyzer()
-        self.gemini_client = GeminiClient(api_key=config.gemini_api_key)
+        self.gemini_client = GeminiClient(config=config)
         self.validator = CodeValidator()
-        self.logger = VizAgentLogger(log_dir=config.log_dir)
+        self.logger = VizAgentLogger(log_dir=config.VIZ_LOG_DIR)
         
-        self.max_correction_attempts = config.max_correction_attempts
+        self.max_correction_attempts = config.MAX_CORRECT_ATTEMPTS
     
     def generate_visualization(self, input_data: VizAgentInput) -> VizAgentOutput:
         """
@@ -105,7 +106,7 @@ class VizAgent:
                     # ¡Éxito! Generar output
                     execution_time = time.time() - start_time
                     
-                    plotly_json = validation_result.figure.to_json()
+                    plotly_json = json.loads(validation_result.figure.to_json())
                     
                     session_data["final_code"] = current_code
                     session_data["attempts"] = attempt

@@ -1,55 +1,54 @@
-# Quickstart: Gen BI Backend
+# Quickstart: GenBI Backend
 
-Guía rápida para levantar el entorno de desarrollo del Agente Decisor y la API de orquestación.
+Guía rápida para levantar el entorno de desarrollo del sistema GenBI con configuración centralizada.
 
 ## Requisitos Previos
 
 - Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (Recomendado para gestión de paquetes)
-- PostgreSQL (Instancia corriendo para persistencia)
+- [uv](https://github.com/astral-sh/uv) (Recomendado)
+- PostgreSQL corriendo localmente.
 
 ## Configuración del Entorno
 
-1. **Clonar el repositorio** y posicionarse en la raíz del backend.
-2. **Crear archivos .env**:
-   Copia los ejemplos proporcionados en cada módulo y completa las llaves de API (Gemini):
+1. **Clonar el repositorio** y posicionarse en la raíz del backend (`/backend`).
+2. **Crear archivo .env centralizado**:
+   Copia el ejemplo de la raíz:
    ```bash
-   cp api/.env.example api/.env
-   cp decision_agent/.env.example decision_agent/.env
-   cp vanna_agent/.env.example vanna_agent/.env
+   cp .env.example .env
    ```
 3. **Variables Críticas**:
-   - `GEMINI_API_KEY`: Requerida en todos los agentes.
-   - `DATABASE_URL`: URL de PostgreSQL (ej: `postgresql+asyncpg://user:pass@localhost:5432/gendash_db`).
-   - `CHINOOK_DB_URL`: Para `vanna_agent`, apunta a la base analítica.
+   Edita el nuevo archivo `.env` en la raíz con tus credenciales:
+   - `GEMINI_API_KEY`: Tu API Key de Google AI Studio.
+   - `DB_PASSWORD`: Password de tu Postgres local.
+   - `GEMINI_MODEL`: Modelo a usar (ej: `gemini-1.5-flash`).
+
+*Nota: No es necesario crear archivos .env dentro de cada carpeta de agente, ya que todos leerán el archivo de la raíz automáticamente.*
 
 ## Ejecución de la API
 
 Desde la raíz del proyecto:
 
 ```bash
-# Instalar dependencias y correr en modo dev
+# Configurar PYTHONPATH e iniciar servidor
 export PYTHONPATH=$PWD/api/src:$PWD/decision_agent/src:$PWD/vanna_agent/src:$PWD/viz_agent/src
 uv run --project api/ uvicorn api.main:app --reload
 ```
 
-La API estará disponible en `http://localhost:8000`. Puedes ver la documentación interactiva en `/docs`.
+La API estará disponible en `http://localhost:8000/api/v1`. Documentación en `/docs`.
 
 ## Ejecución de Tests
 
-### Tests de la API (Smoke Tests)
 ```bash
-uv run --project api/ --extra dev pytest api/tests/smoke_test.py
+# Smoke test completo
+uv run --project api/ pytest api/tests/smoke_test.py
+
+# Tests unitarios del Decision Agent
+uv run --project api/ pytest decision_agent/tests/test_agent.py
 ```
 
-### Tests del Decision Agent
-```bash
-uv run --project api/ --extra dev pytest decision_agent/tests/test_agent.py
-```
+## Estructura de Endpoints
 
-## Estructura de Endpoints Principales
-
-- `POST /api/v1/generate`: Punto de entrada principal para consultas en lenguaje natural.
-- `GET /api/v1/sessions/{id}/history`: Recupera el historial de chat.
-- `GET /api/v1/results/{id}`: Recupera una visualización guardada específicamente.
-- `GET /api/v1/health`: Estado de salud del sistema y sus componentes.
+- `POST /api/v1/generate`: Generar SQL + Visualización desde lenguaje natural.
+- `GET /api/v1/sessions/{id}/history`: Historial de conversación.
+- `GET /api/v1/results/{id}`: Detalle de un resultado guardado.
+- `GET /api/v1/health`: Estado del sistema.

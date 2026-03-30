@@ -34,7 +34,7 @@ def get_engine(settings: Settings | None = None) -> AsyncEngine:
         if settings is None:
             settings = Settings()  # type: ignore[call-arg]
         _engine = create_async_engine(
-            settings.DATABASE_URL,
+            settings.APP_DB_URL,
             pool_size=5,
             max_overflow=10,
             pool_pre_ping=True,

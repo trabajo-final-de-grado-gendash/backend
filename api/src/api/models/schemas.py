@@ -45,6 +45,7 @@ class GenerateResponse(BaseModel):
     plotly_json: Optional[dict[str, Any]] = None
     sql: Optional[str] = None
     plotly_code: Optional[str] = None
+    chart_type: Optional[str] = None
 
 
 class ComponentHealth(BaseModel):

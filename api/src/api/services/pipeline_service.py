@@ -21,26 +21,24 @@ def get_decision_agent() -> DecisionAgent:
     if _decision_agent_instance is None:
         try:
             from vanna_agent.agent import VannaAgent
+            from viz_agent.agent import VizAgent
+            from viz_agent.config import Settings as VizSettings
+            from vanna_agent.config import Settings as VannaSettings
+            from decision_agent.config import Settings as DecisionSettings
             
-            # Since viz_agent is just a mock for now, we'll try to load it or mock it
-            try:
-                from viz_agent.agent import VizAgent
-                viz_agent = VizAgent()
-            except ImportError:
-                class MockVizAgent:
-                    def generate_visualization(self, input_data: Any) -> Any:
-                        class Output:
-                            success = True
-                            plotly_json = {"data": [], "layout": {}}
-                            plotly_code = ""
-                        return Output()
-                viz_agent = MockVizAgent()
+            # Inicializar settings individuales (todos cargarán del root .env por cascada)
+            viz_settings = VizSettings()
+            vanna_settings = VannaSettings()
+            decision_settings = DecisionSettings()
             
-            vanna_agent = VannaAgent()
+            # Instanciar agentes con sus configuraciones
+            viz_agent_instance = VizAgent(config=viz_settings)
+            vanna_agent_instance = VannaAgent(settings=vanna_settings)
             
             _decision_agent_instance = DecisionAgent(
-                text2sql_agent=vanna_agent,
-                viz_agent=viz_agent
+                settings=decision_settings,
+                text2sql_agent=vanna_agent_instance,
+                viz_agent=viz_agent_instance
             )
         except Exception as e:
             raise RuntimeError(f"Failed to initialize agents for PipelineService: {e}") from e

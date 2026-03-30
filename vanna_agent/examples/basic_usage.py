@@ -21,7 +21,7 @@ def main() -> None:
 
     settings = Settings()  # type: ignore[call-arg]
     print(f"[config] GEMINI_MODEL  : {settings.GEMINI_MODEL}")
-    print(f"[config] CHINOOK_DB_URL: {settings.CHINOOK_DB_URL[:30]}...")
+    print(f"[config] SOURCE_DB_URL: {settings.SOURCE_DB_URL[:30]}...")
     print()
 
     agent = VannaAgent(settings=settings)

@@ -1,34 +1,46 @@
 """
 config.py — Configuración de la API con Pydantic BaseSettings.
-
-Carga automáticamente las variables de entorno desde .env.
-Referencia: plan.md §API
 """
 
 from __future__ import annotations
-
+from pathlib import Path
+from typing import Annotated, Any, Union
+from pydantic import BeforeValidator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def parse_cors_origins(v: Any) -> list[str]:
+    """Validador para convertir strings sep. por coma en listas."""
+    if isinstance(v, str):
+        return [i.strip() for i in v.split(",")]
+    return v
 
 
 class Settings(BaseSettings):
     """
-    Configuración de la API REST de Gen BI.
-
-    Variables de entorno requeridas / opcionales:
-        DATABASE_URL          : Connection string de PostgreSQL para persistencia (obligatorio)
-                                Ejemplo: postgresql+asyncpg://user:pass@host:5432/genbi_db
-        CORS_ORIGINS          : Orígenes CORS permitidos separados por coma
-                                (default: ["http://localhost:3000"])
-        CONTEXT_WINDOW_SIZE   : Tamaño de la ventana de contexto conversacional (default: 5)
+    Configuración central de la API.
     """
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[
+            ".env",
+            str(Path(__file__).resolve().parent.parent.parent / ".env"),
+            str(Path(__file__).resolve().parent.parent.parent.parent / ".env")
+        ],
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="ignore",
     )
 
-    DATABASE_URL: str
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:5173"]
+    # Database
+    APP_DB_URL: str
+
+    # Security
+    CORS_ORIGINS: Annotated[list[str], BeforeValidator(parse_cors_origins)] = [
+        "http://localhost:3000"
+    ]
+
+    # AI Shared
+    GEMINI_API_KEY: str
+    GEMINI_MODEL: str = "gemini-1.5-flash"
     CONTEXT_WINDOW_SIZE: int = 5

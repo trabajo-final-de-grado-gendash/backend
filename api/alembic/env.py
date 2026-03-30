@@ -29,8 +29,9 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Override sqlalchemy.url from environment variable if set
-import os
-database_url = os.getenv("DATABASE_URL")
+from api.config import Settings
+settings = Settings()
+database_url = settings.APP_DB_URL
 if database_url:
     config.set_main_option("sqlalchemy.url", database_url)
 

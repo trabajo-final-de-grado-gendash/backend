@@ -71,7 +71,7 @@ class DecisionAgent:
             
             vanna_settings = VannaSettings(
                 GEMINI_API_KEY=self.settings.GEMINI_API_KEY,
-                CHINOOK_DB_URL=self.settings.CHINOOK_DB_URL,
+                SOURCE_DB_URL=self.settings.SOURCE_DB_URL,
             )
             self.text2sql_agent = VannaAgent(settings=vanna_settings)
         except ImportError:
@@ -80,10 +80,10 @@ class DecisionAgent:
     def _try_load_viz(self):
         try:
             from viz_agent.agent import VizAgent
-            from viz_agent.config import Config as VizConfig
+            from viz_agent.config import Settings as VizSettings
             
-            viz_config = VizConfig(
-                gemini_api_key=self.settings.GEMINI_API_KEY,
+            viz_config = VizSettings(
+                GEMINI_API_KEY=self.settings.GEMINI_API_KEY,
             )
             self.viz_agent = VizAgent(config=viz_config)
         except ImportError:
@@ -96,7 +96,7 @@ class DecisionAgent:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._run_internal, input_data)
             try:
-                return future.result(timeout=14.5)
+                return future.result(timeout=30.5)
             except concurrent.futures.TimeoutError as exc:
                 self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=14500)
                 raise PipelineError(

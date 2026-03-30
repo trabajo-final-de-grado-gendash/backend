@@ -29,7 +29,7 @@ class VannaAgent:
         )
         
         # Inicializar el runner para ejecutar el SQL en PostgreSQL (Chinook)
-        self.sql_runner = PostgresRunner(connection_string=settings.CHINOOK_DB_URL)
+        self.sql_runner = PostgresRunner(connection_string=settings.SOURCE_DB_URL)
         
         # Instanciar la herramienta que envuelve la ejecución SQL
         self.run_sql_tool = RunSqlTool(sql_runner=self.sql_runner)

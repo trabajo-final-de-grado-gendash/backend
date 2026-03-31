@@ -9,9 +9,63 @@ from vanna.tools.agent_memory import SaveQuestionToolArgsTool, SearchSavedCorrec
 from vanna.servers.fastapi import VannaFastAPIServer
 from vanna.integrations.postgres import PostgresRunner
 from vanna.integrations.local.agent_memory import DemoAgentMemory
-
+from vanna.integrations.pinecone.agent_memory import PineconeAgentMemory
+from vanna.core.enhancer import LlmContextEnhancer
+from vanna.core.llm import LlmMessage
 
 load_dotenv()
+
+
+
+class SchemaEnhancer(LlmContextEnhancer):
+    def __init__(self, sql_runner):
+        self.sql_runner = sql_runner
+        self.schema_cache = None
+
+    async def enhance_system_prompt(
+        self,
+        system_prompt: str,
+        user_message: str,
+        user: User
+    ) -> str:
+        # Cache schema information
+        if not self.schema_cache:
+            self.schema_cache = await self.sql_runner.get_schema_info()
+
+        # Extract relevant tables mentioned in user message
+        relevant_tables = self._find_relevant_tables(
+            user_message,
+            self.schema_cache
+        )
+
+        if not relevant_tables:
+            return system_prompt
+
+        # Add schema information to prompt
+        schema_section = "\n\n## Relevant Database Schema\n\n"
+        for table in relevant_tables:
+            schema_section += f"**{table['name']}**\n"
+            schema_section += f"Columns: {', '.join(table['columns'])}\n\n"
+
+        return system_prompt + schema_section
+
+    def _find_relevant_tables(self, message: str, schema: dict) -> list:
+        # Simple keyword matching (could use embeddings)
+        message_lower = message.lower()
+        relevant = []
+
+        for table in schema['tables']:
+            if table['name'].lower() in message_lower:
+                relevant.append(table)
+
+        return relevant
+
+    async def enhance_user_messages(
+        self,
+        messages: list[LlmMessage],
+        user: User
+    ) -> list[LlmMessage]:
+        return messages
 
 
 
@@ -31,7 +85,11 @@ db_tool = RunSqlTool(
 
 
 # Configure your agent memory
-agent_memory = DemoAgentMemory(max_items=1000)
+agent_memory = PineconeAgentMemory(
+    api_key=os.getenv("PINECONE_API_KEY"),
+    environment=os.getenv("PINECONE_ENVIRONMENT"),
+    index_name=os.getenv("PINECONE_INDEX_NAME")
+)
 
 # Configure user authentication
 class SimpleUserResolver(UserResolver):
@@ -54,7 +112,8 @@ agent = Agent(
     llm_service=llm,
     tool_registry=tools,
     user_resolver=user_resolver,
-    agent_memory=agent_memory
+    agent_memory=agent_memory,
+    llm_context_enhancer=SchemaEnhancer(db_tool.sql_runner)
 )
 
 # Run the server

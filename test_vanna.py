@@ -1,6 +1,7 @@
 import os
 from dotenv import load_dotenv
-from vanna.integrations.azureopenai import AzureOpenAILlmService
+# from vanna.integrations.azureopenai import AzureOpenAILlmService
+from vanna.integrations.google import GeminiLlmService
 from vanna import Agent
 from vanna.core.registry import ToolRegistry
 from vanna.core.user import UserResolver, User, RequestContext
@@ -70,16 +71,14 @@ class SchemaEnhancer(LlmContextEnhancer):
 
 
 # 2. Configuración para Azure
-llm = AzureOpenAILlmService(
-    model="gpt-4",                 # O el nombre de tu modelo base
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    api_version="2024-02-15-preview" # ¡Importante! Azure necesita versión de API
+llm = GeminiLlmService(
+    model="gemini-3-flash-preview",
+    api_key=os.getenv("GEMINI_API_KEY")
 )
 
 db_tool = RunSqlTool(
     sql_runner=PostgresRunner(
-        connection_string=f"postgresql://{os.getenv('POSTGRES_USER')}:{os.getenv('POSTGRES_PASSWORD')}@{os.getenv('POSTGRES_HOST')}:{os.getenv('POSTGRES_PORT')}/{os.getenv('POSTGRES_DB')}"
+        connection_string=os.getenv("SOURCE_DB_URL")
     )
 )
 

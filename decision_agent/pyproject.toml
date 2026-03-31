@@ -1,0 +1,69 @@
+[project]
+name = "decision-agent"
+version = "0.1.0"
+description = "Agente decisor para Gen BI — clasifica intenciones y orquesta el pipeline de visualización"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Nahuel Agustin Carro", email = "nahuelagustincarro@gmail.com"}
+]
+
+dependencies = [
+    # AI/LLM
+    "google-genai>=1.0.0",
+    # Validation & models
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.0.0",
+    # SQL validation
+    "sqlparse>=0.5.0",
+    # Structured logging
+    "structlog>=24.1.0",
+    # Env loading
+    "python-dotenv>=1.0.0",
+    # Data
+    "pandas>=2.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "pytest-asyncio>=0.23.0",
+    "ruff>=0.1.9",
+    "mypy>=1.7.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=decision_agent --cov-report=html --cov-report=term"
+pythonpath = ["src"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/decision_agent"]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+extraPaths = ["src"]
+venvPath = ".."
+venv = ".venv"

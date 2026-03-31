@@ -7,14 +7,15 @@ from .models import DataFrameMetadata, GeminiResponse, CorrectionRequest, CodeCo
 from .prompts.decision_prompt import DECISION_PROMPT_TEMPLATE
 from .prompts.correction_prompt import CORRECTION_PROMPT_TEMPLATE
 import json
+from .config import Settings
 
 
 class GeminiClient:
-    """Cliente para interactuar con Gemini 2.5 Flash usando structured output"""
+    """Cliente para interactuar con Gemini usando el modelo configurado"""
     
-    def __init__(self, api_key: str):
-        self.client = genai.Client(api_key=api_key)
-        self.model = "gemini-2.5-flash"
+    def __init__(self, config: Settings):
+        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        self.model = config.GEMINI_MODEL
         
         # Configuración base de generación
         self.base_config = {

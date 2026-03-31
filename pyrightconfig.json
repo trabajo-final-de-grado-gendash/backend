@@ -1,0 +1,11 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "extraPaths": [
+    "api/src",
+    "decision_agent/src",
+    "vanna_agent/src",
+    "viz_agent/src",
+    "."
+  ]
+}

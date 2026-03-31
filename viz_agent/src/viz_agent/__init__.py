@@ -12,7 +12,7 @@ from .models import (
     CodeCorrectionResponse,
 )
 from .agent import VizAgent
-from .config import Config
+from .config import Settings
 from .analyzer import DataFrameAnalyzer
 from .validator import CodeValidator
 from .gemini_client import GeminiClient
@@ -27,7 +27,7 @@ __all__ = [
     "CorrectionRequest",
     "CodeCorrectionResponse",
     "VizAgent",
-    "Config",
+    "Settings",
     "DataFrameAnalyzer",
     "CodeValidator",
     "GeminiClient",

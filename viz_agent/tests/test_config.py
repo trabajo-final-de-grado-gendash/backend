@@ -2,60 +2,33 @@
 
 import pytest
 import os
-from viz_agent.config import Config
+from viz_agent.config import Settings
 
-
-def test_config_initialization():
-    """Test inicialización directa de Config"""
-    config = Config(
-        gemini_api_key="test_key_123",
-        log_dir="custom_logs",
-        max_correction_attempts=3
+def test_config_init():
+    """Test inicialización directa de Settings"""
+    settings = Settings(
+        GEMINI_API_KEY="test_key",
+        GEMINI_MODEL="gemini-2.1-flash"
     )
-    
-    assert config.gemini_api_key == "test_key_123"
-    assert config.log_dir == "custom_logs"
-    assert config.max_correction_attempts == 3
+    assert settings.GEMINI_API_KEY == "test_key"
+    assert settings.GEMINI_MODEL == "gemini-2.1-flash"
 
-
-def test_config_defaults():
-    """Test valores por defecto"""
-    config = Config(gemini_api_key="test_key")
-    
-    assert config.gemini_api_key == "test_key"
-    assert config.log_dir == "logs"
-    assert config.max_correction_attempts == 5
-
+def test_config_default_model():
+    """Test modelo por defecto"""
+    settings = Settings(GEMINI_API_KEY="test_key")
+    assert settings.GEMINI_MODEL == "gemini-1.5-flash"
 
 def test_config_from_env(monkeypatch):
     """Test carga desde variables de entorno"""
-    monkeypatch.setenv("GEMINI_API_KEY", "env_test_key")
-    monkeypatch.setenv("LOG_DIR", "env_logs")
-    monkeypatch.setenv("MAX_CORRECTION_ATTEMPTS", "10")
-    
-    config = Config.from_env()
-    
-    assert config.gemini_api_key == "env_test_key"
-    assert config.log_dir == "env_logs"
-    assert config.max_correction_attempts == 10
+    monkeypatch.setenv("GEMINI_API_KEY", "env_key")
+    monkeypatch.setenv("GEMINI_MODEL", "env_model")
+    settings = Settings()
+    assert settings.GEMINI_API_KEY == "env_key"
+    assert settings.GEMINI_MODEL == "env_model"
 
-
-def test_config_from_env_defaults(monkeypatch):
-    """Test defaults cuando no hay variables de entorno"""
-    # Limpiar variables de entorno
+def test_config_missing_key(monkeypatch):
+    """Test error cuando falta la API Key"""
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
-    monkeypatch.delenv("LOG_DIR", raising=False)
-    monkeypatch.delenv("MAX_CORRECTION_ATTEMPTS", raising=False)
-    
-    config = Config.from_env()
-    
-    assert config.gemini_api_key == ""
-    assert config.log_dir == "logs"
-    assert config.max_correction_attempts == 5
-
-
-def test_config_from_env_partial(monkeypatch):
-    """Test con solo algunas variables de entorno"""
     monkeypatch.setenv("GEMINI_API_KEY", "partial_key")
     monkeypatch.delenv("LOG_DIR", raising=False)
     

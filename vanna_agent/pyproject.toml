@@ -1,0 +1,67 @@
+[project]
+name = "vanna-agent"
+version = "0.1.0"
+description = "Wrapper standalone de Vanna AI para Gen BI — text2sql sobre Chinook con Gemini"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+    {name = "Nahuel Agustin Carro", email = "nahuelagustincarro@gmail.com"}
+]
+
+dependencies = [
+    # Vanna AI with Gemini + Postgres support
+    "vanna[gemini,postgres]>=0.7.0",
+    # Validation & models
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.0.0",
+    # Env loading
+    "python-dotenv>=1.0.0",
+    # Data
+    "pandas>=2.2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.12.0",
+    "ruff>=0.1.9",
+    "mypy>=1.7.1",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-v --cov=vanna_agent --cov-report=html --cov-report=term"
+pythonpath = ["src"]
+markers = [
+    "integration: marks tests as integration tests (require real DB and Gemini)",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vanna_agent"]
+
+[tool.pyright]
+typeCheckingMode = "basic"
+extraPaths = ["src"]
+venvPath = ".."
+venv = ".venv"

@@ -34,7 +34,7 @@ class VizAgentOutput(BaseModel):
     """Output del agente de visualización"""
     success: bool
     plotly_code: Optional[str] = None
-    plotly_json: Optional[str] = None
+    plotly_json: Optional[Dict[str, Any]] = None
     chart_type: Optional[str] = None
     error_message: Optional[str] = None
     metadata: Dict[str, Any] = Field(default_factory=dict)

@@ -31,7 +31,7 @@ DECISION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Analyz
 - **box**: Use for showing statistical distributions and outliers
 
 ## Code Generation Rules
-1. The DataFrame is available as variable 'df' in the code
+1. The DataFrame is already loaded and available as variable 'df'. DO NOT create, recreate, or mock 'df' in your code (e.g., do not use `data = {{...}}`).
 2. The final figure MUST be stored in a variable named 'fig'
 3. Use plotly.express (px) or plotly.graph_objects (go) - whichever is appropriate
 4. Handle null values gracefully (use dropna() if needed)
@@ -39,8 +39,9 @@ DECISION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Analyz
 6. If not specified, use sensible defaults with professional styling
 7. Ensure the code is complete and executable
 8. Do not use columns that don't exist in the DataFrame
-9. Always include necessary imports (import plotly.express as px, etc.)
+9. Always include necessary imports (import plotly.express as px, import pandas as pd, etc.)
 10. Add appropriate axis labels and titles for clarity
+11. **CRITICAL**: Use the existing `df` variable directly. Never construct a dictionary to override `df`.
 
 Generate a response following the provided JSON schema.
 """

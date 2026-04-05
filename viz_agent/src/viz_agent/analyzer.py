@@ -13,7 +13,7 @@ class DataFrameAnalyzer:
         
         # 1. Identificar tipos de columnas
         numeric_cols = df.select_dtypes(include=['number']).columns.tolist()
-        categorical_cols = df.select_dtypes(include=['object', 'category', 'str']).columns.tolist()
+        categorical_cols = df.select_dtypes(include=['object', 'category', 'string']).columns.tolist()
         datetime_cols = df.select_dtypes(include=['datetime64']).columns.tolist()
         
         # 2. Calcular valores únicos (para identificar categorías vs. IDs)

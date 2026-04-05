@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: genbi_postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: genbi_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount initialization scripts
+      - ./bdd/init-postgres.sh:/docker-entrypoint-initdb.d/01-init-postgres.sh
+      - ./bdd/chinook.sql:/tmp/chinook.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d genbi_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: genbi_api
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - APP_DB_URL=postgresql+asyncpg://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/genbi_db
+      - SOURCE_DB_URL=postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/chinook
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash}
+      - CORS_ORIGINS=["*"]
+      # Additional configurable values
+      - CONTEXT_WINDOW_SIZE=5
+      - VIZ_LOG_DIR=/app/logs
+      - MAX_CORRECT_ATTEMPTS=5
+    env_file:
+      - .env
+    volumes:
+      - ./logs:/app/logs
+
+volumes:
+  postgres_data:

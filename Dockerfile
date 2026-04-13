@@ -11,10 +11,6 @@ RUN apt-get update && apt-get install -y \
     postgresql-client build-essential \
     && rm -rf /var/lib/apt/lists/*
 
-# Install specific requirements if listed
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 # Copy the entire workspace
 COPY . /app
 

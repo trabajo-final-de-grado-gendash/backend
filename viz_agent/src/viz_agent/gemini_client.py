@@ -3,9 +3,16 @@
 from google import genai
 from google.genai import types
 from typing import List
-from .models import DataFrameMetadata, GeminiResponse, CorrectionRequest, CodeCorrectionResponse
+from .models import (
+    DataFrameMetadata,
+    GeminiResponse,
+    CorrectionRequest,
+    CodeCorrectionResponse,
+    ChartModificationResponse,
+)
 from .prompts.decision_prompt import DECISION_PROMPT_TEMPLATE
 from .prompts.correction_prompt import CORRECTION_PROMPT_TEMPLATE
+from .prompts.modification_prompt import MODIFICATION_PROMPT_TEMPLATE
 import json
 from .config import Settings
 
@@ -22,7 +29,7 @@ class GeminiClient:
             "temperature": 0.2,  # Baja temperatura para consistencia
             "top_p": 0.8,
             "top_k": 40,
-            "max_output_tokens": 4096,
+            "max_output_tokens": 8192,
         }
     
     def decide_and_generate_code(
@@ -47,6 +54,7 @@ class GeminiClient:
             datetime_columns=", ".join(df_metadata.datetime_columns),
             sample_values=json.dumps(df_metadata.sample_values, indent=2),
             unique_counts=json.dumps(df_metadata.unique_counts, indent=2),
+            unique_values=json.dumps(df_metadata.unique_values, indent=2),
             allowed_charts=", ".join(allowed_charts)
         )
         
@@ -107,10 +115,74 @@ class GeminiClient:
         )
         
         # Parsear y retornar solo el código corregido
-        response_data = json.loads(response.text)
+        try:
+            response_data = json.loads(response.text)
+        except json.JSONDecodeError as e:
+            finish_reason = getattr(response.candidates[0], "finish_reason", "UNKNOWN") if response.candidates else "NO_CANDIDATES"
+            raise ValueError(
+                f"Gemini returned invalid JSON (truncated? finish_reason: {finish_reason}). Error: {e}\nRaw text:\n{response.text}"
+            ) from e
         correction = CodeCorrectionResponse(**response_data)
         return correction.corrected_code
-    
+
+    def modify_chart_code(
+        self,
+        plotly_code: str,
+        user_prompt: str,
+        df_metadata: "DataFrameMetadata",
+    ) -> tuple[str, str]:
+        """
+        Modifica el código Python Plotly de un gráfico según instrucciones del usuario.
+
+        Envía el código actual + metadata del DataFrame + prompt a Gemini y
+        recibe el código modificado.
+
+        Returns:
+            Tupla (modified_code, changes_description)
+        """
+        prompt = MODIFICATION_PROMPT_TEMPLATE.format(
+            plotly_code=plotly_code,
+            user_prompt=user_prompt,
+            df_shape=df_metadata.shape,
+            columns=", ".join(df_metadata.columns),
+            numeric_columns=", ".join(df_metadata.numeric_columns),
+            categorical_columns=", ".join(df_metadata.categorical_columns),
+            datetime_columns=", ".join(df_metadata.datetime_columns),
+            sample_values=json.dumps(df_metadata.sample_values, indent=2),
+            unique_counts=json.dumps(df_metadata.unique_counts, indent=2),
+            unique_values=json.dumps(df_metadata.unique_values, indent=2),
+        )
+
+        schema = ChartModificationResponse.model_json_schema()
+        schema = self._clean_schema(schema)
+
+        config = types.GenerateContentConfig(
+            **self.base_config,
+            response_mime_type="application/json",
+            response_schema=schema,
+        )
+
+        response = self.client.models.generate_content(
+            model=self.model,
+            contents=prompt,
+            config=config,
+        )
+
+        # Parsear y retornar el código modificado
+        try:
+            response_data = json.loads(response.text)
+        except json.JSONDecodeError as e:
+            # Inspeccionar por qué terminó la respuesta
+            finish_reason = getattr(response.candidates[0], "finish_reason", "UNKNOWN") if response.candidates else "NO_CANDIDATES"
+            
+            # Si el JSON es inválido, soltar un error más claro con el texto parcial
+            raise ValueError(
+                f"Gemini returned invalid JSON (truncated? finish_reason: {finish_reason}). Error: {e}\nRaw text:\n{response.text}"
+            ) from e
+        modification = ChartModificationResponse(**response_data)
+        return modification.modified_code, modification.changes_description
+
+
     def _clean_schema(self, schema: dict) -> dict:
         """
         Limpia el JSON Schema para que sea compatible con Gemini API.

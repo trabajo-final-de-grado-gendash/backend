@@ -27,6 +27,6 @@ class Settings(BaseSettings):
     )
 
     GEMINI_API_KEY: str
-    GEMINI_MODEL: str = "gemini-1.5-flash"
+    GEMINI_MODEL: str = "gemini-2.5-flash"
     VIZ_LOG_DIR: str = "logs"
     MAX_CORRECT_ATTEMPTS: int = 5

@@ -2,6 +2,7 @@
 
 import sys
 import io
+import re
 import traceback
 from typing import Optional
 import pandas as pd
@@ -19,7 +20,12 @@ class CodeValidator:
         dataframe: pd.DataFrame
     ) -> ValidationResult:
         """Ejecuta el código y valida el resultado"""
-        
+
+        # 0. Rechazar código que redefina 'df' (usa datos falsos en lugar del real)
+        df_error = self._check_df_redefinition(code)
+        if df_error:
+            return df_error
+
         # 1. Crear namespace sandbox
         sandbox_namespace = {
             'pd': pd,
@@ -117,3 +123,26 @@ class CodeValidator:
                 return True
         
         return False
+
+    def _check_df_redefinition(self, code: str) -> Optional[ValidationResult]:
+        """
+        Detecta si el código intenta redefinir la variable 'df'.
+
+        El DataFrame real se inyecta en el sandbox antes de exec(); si el código
+        lo sobreescribe con datos simulados, el gráfico se genera con data falsa.
+        """
+        # Busca asignaciones directas: df = ... o df=...
+        # Ignora accesos como df.copy(), df.groupby(), df_sorted = ...
+        pattern = re.compile(r'^\s*df\s*=', re.MULTILINE)
+        if pattern.search(code):
+            return ValidationResult(
+                success=False,
+                error_type="runtime",
+                error_message=(
+                    "The code redefines the 'df' variable with mock/sample data. "
+                    "You must use the existing 'df' variable directly — it is already "
+                    "loaded with the real query results. Remove any 'df = pd.DataFrame(...)' "
+                    "or similar assignments and use 'df' as-is."
+                ),
+            )
+        return None

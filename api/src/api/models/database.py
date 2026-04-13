@@ -160,6 +160,13 @@ class GenerationResult(Base):
         default=_utcnow,
         server_default=func.now(),
     )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        onupdate=_utcnow,
+        server_default=func.now(),
+    )
 
     # Relationships
     session: Mapped[Session] = relationship("Session", back_populates="results")

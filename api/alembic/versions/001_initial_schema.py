@@ -22,6 +22,8 @@ depends_on: None = None
 
 
 def upgrade() -> None:
+    op.execute("CREATE SCHEMA IF NOT EXISTS bigenia")
+    op.execute("SET search_path TO bigenia")
 
     # --- sessions ---
     op.create_table(
@@ -120,6 +122,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    op.execute("SET search_path TO bigenia")
     op.drop_index("ix_generation_results_created_at", "generation_results")
     op.drop_index("ix_generation_results_session_id", "generation_results")
     op.drop_table("generation_results")

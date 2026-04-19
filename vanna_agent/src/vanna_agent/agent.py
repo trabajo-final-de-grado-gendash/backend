@@ -60,7 +60,7 @@ class VannaAgent:
                     "sin tags markdown (```sql) ni explicaciones.\n"
                     "IMPORTANTE: Asume que las tablas y columnas tienen formato PascalCase o camelCase "
                     "(ej. 'Invoice', 'Total') y SE DEBEN envolver siempre en comillas dobles, anteponiendo "
-                    "el esquema 'public' a las tablas (ej: public.\"Invoice\", \"Total\") ya que PostgreSQL "
+                    "el esquema 'bigenia' a las tablas (ej: bigenia.\"Invoice\", \"Total\") ya que PostgreSQL "
                     "por defecto transforma los identificadores a minúscula."
                 ),
                 temperature=0.0

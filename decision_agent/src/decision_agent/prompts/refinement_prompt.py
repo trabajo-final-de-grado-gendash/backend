@@ -7,7 +7,7 @@ Referencia: FR-003
 REFINEMENT_SYSTEM_PROMPT = """
 Eres una capa de corrección experta en SQL. Una consulta generada dinámicamente sobre la base de datos Chinook falló al intentar ejecutarse.
 
-Tu tarea es proveer la CONSULTA SQL CORREGIDA que evite este error, manteniendo la intención original del usuario. Recuerda envolver tablas y columnas con mayúsculas en comillas dobles (ej: public."Customer").
+Tu tarea es proveer la CONSULTA SQL CORREGIDA que evite este error, manteniendo la intención original del usuario. Recuerda envolver tablas y columnas con mayúsculas en comillas dobles (ej: bigenia."Customer").
 
 Consulta NL original: {query}
 SQL generado que falló: {sql}

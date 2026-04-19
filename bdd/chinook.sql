@@ -19,10 +19,10 @@ SET row_security = off;
 SET default_table_access_method = heap;
 
 --
--- Name: Album; Type: TABLE; Schema: public; Owner: -
+-- Name: Album; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Album" (
+CREATE TABLE bigenia."Album" (
     "AlbumId" integer NOT NULL,
     "Title" character varying(160) NOT NULL,
     "ArtistId" integer NOT NULL
@@ -30,20 +30,20 @@ CREATE TABLE public."Album" (
 
 
 --
--- Name: Artist; Type: TABLE; Schema: public; Owner: -
+-- Name: Artist; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Artist" (
+CREATE TABLE bigenia."Artist" (
     "ArtistId" integer NOT NULL,
     "Name" character varying(120)
 );
 
 
 --
--- Name: Customer; Type: TABLE; Schema: public; Owner: -
+-- Name: Customer; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Customer" (
+CREATE TABLE bigenia."Customer" (
     "CustomerId" integer NOT NULL,
     "FirstName" character varying(40) NOT NULL,
     "LastName" character varying(20) NOT NULL,
@@ -61,10 +61,10 @@ CREATE TABLE public."Customer" (
 
 
 --
--- Name: Employee; Type: TABLE; Schema: public; Owner: -
+-- Name: Employee; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Employee" (
+CREATE TABLE bigenia."Employee" (
     "EmployeeId" integer NOT NULL,
     "LastName" character varying(20) NOT NULL,
     "FirstName" character varying(20) NOT NULL,
@@ -84,20 +84,20 @@ CREATE TABLE public."Employee" (
 
 
 --
--- Name: Genre; Type: TABLE; Schema: public; Owner: -
+-- Name: Genre; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Genre" (
+CREATE TABLE bigenia."Genre" (
     "GenreId" integer NOT NULL,
     "Name" character varying(120)
 );
 
 
 --
--- Name: Invoice; Type: TABLE; Schema: public; Owner: -
+-- Name: Invoice; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Invoice" (
+CREATE TABLE bigenia."Invoice" (
     "InvoiceId" integer NOT NULL,
     "CustomerId" integer NOT NULL,
     "InvoiceDate" timestamp without time zone NOT NULL,
@@ -111,10 +111,10 @@ CREATE TABLE public."Invoice" (
 
 
 --
--- Name: InvoiceLine; Type: TABLE; Schema: public; Owner: -
+-- Name: InvoiceLine; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."InvoiceLine" (
+CREATE TABLE bigenia."InvoiceLine" (
     "InvoiceLineId" integer NOT NULL,
     "InvoiceId" integer NOT NULL,
     "TrackId" integer NOT NULL,
@@ -124,40 +124,40 @@ CREATE TABLE public."InvoiceLine" (
 
 
 --
--- Name: MediaType; Type: TABLE; Schema: public; Owner: -
+-- Name: MediaType; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."MediaType" (
+CREATE TABLE bigenia."MediaType" (
     "MediaTypeId" integer NOT NULL,
     "Name" character varying(120)
 );
 
 
 --
--- Name: Playlist; Type: TABLE; Schema: public; Owner: -
+-- Name: Playlist; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Playlist" (
+CREATE TABLE bigenia."Playlist" (
     "PlaylistId" integer NOT NULL,
     "Name" character varying(120)
 );
 
 
 --
--- Name: PlaylistTrack; Type: TABLE; Schema: public; Owner: -
+-- Name: PlaylistTrack; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."PlaylistTrack" (
+CREATE TABLE bigenia."PlaylistTrack" (
     "PlaylistId" integer NOT NULL,
     "TrackId" integer NOT NULL
 );
 
 
 --
--- Name: Track; Type: TABLE; Schema: public; Owner: -
+-- Name: Track; Type: TABLE; Schema: bigenia; Owner: -
 --
 
-CREATE TABLE public."Track" (
+CREATE TABLE bigenia."Track" (
     "TrackId" integer NOT NULL,
     "Name" character varying(200) NOT NULL,
     "AlbumId" integer,
@@ -171,10 +171,10 @@ CREATE TABLE public."Track" (
 
 
 --
--- Data for Name: Album; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Album; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Album" ("AlbumId", "Title", "ArtistId") FROM stdin;
+COPY bigenia."Album" ("AlbumId", "Title", "ArtistId") FROM stdin;
 1	For Those About To Rock We Salute You	1
 2	Balls to the Wall	2
 3	Restless and Wild	2
@@ -526,10 +526,10 @@ COPY public."Album" ("AlbumId", "Title", "ArtistId") FROM stdin;
 
 
 --
--- Data for Name: Artist; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Artist; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Artist" ("ArtistId", "Name") FROM stdin;
+COPY bigenia."Artist" ("ArtistId", "Name") FROM stdin;
 1	AC/DC
 2	Accept
 3	Aerosmith
@@ -809,10 +809,10 @@ COPY public."Artist" ("ArtistId", "Name") FROM stdin;
 
 
 --
--- Data for Name: Customer; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Customer; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Customer" ("CustomerId", "FirstName", "LastName", "Company", "Address", "City", "State", "Country", "PostalCode", "Phone", "Fax", "Email", "SupportRepId") FROM stdin;
+COPY bigenia."Customer" ("CustomerId", "FirstName", "LastName", "Company", "Address", "City", "State", "Country", "PostalCode", "Phone", "Fax", "Email", "SupportRepId") FROM stdin;
 1	Lu�s	Gon�alves	Embraer - Empresa Brasileira de Aeron�utica S.A.	Av. Brigadeiro Faria Lima, 2170	S�o Jos� dos Campos	SP	Brazil	12227-000	+55 (12) 3923-5555	+55 (12) 3923-5566	luisg@embraer.com.br	3
 2	Leonie	K�hler	\N	Theodor-Heuss-Stra�e 34	Stuttgart	\N	Germany	70174	+49 0711 2842222	\N	leonekohler@surfeu.de	5
 3	Fran�ois	Tremblay	\N	1498 rue B�langer	Montr�al	QC	Canada	H2G 1A7	+1 (514) 721-4711	\N	ftremblay@gmail.com	3
@@ -876,10 +876,10 @@ COPY public."Customer" ("CustomerId", "FirstName", "LastName", "Company", "Addre
 
 
 --
--- Data for Name: Employee; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Employee; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Employee" ("EmployeeId", "LastName", "FirstName", "Title", "ReportsTo", "BirthDate", "HireDate", "Address", "City", "State", "Country", "PostalCode", "Phone", "Fax", "Email") FROM stdin;
+COPY bigenia."Employee" ("EmployeeId", "LastName", "FirstName", "Title", "ReportsTo", "BirthDate", "HireDate", "Address", "City", "State", "Country", "PostalCode", "Phone", "Fax", "Email") FROM stdin;
 1	Adams	Andrew	General Manager	\N	1962-02-18 00:00:00	2002-08-14 00:00:00	11120 Jasper Ave NW	Edmonton	AB	Canada	T5K 2N1	+1 (780) 428-9482	+1 (780) 428-3457	andrew@chinookcorp.com
 2	Edwards	Nancy	Sales Manager	1	1958-12-08 00:00:00	2002-05-01 00:00:00	825 8 Ave SW	Calgary	AB	Canada	T2P 2T3	+1 (403) 262-3443	+1 (403) 262-3322	nancy@chinookcorp.com
 3	Peacock	Jane	Sales Support Agent	2	1973-08-29 00:00:00	2002-04-01 00:00:00	1111 6 Ave SW	Calgary	AB	Canada	T2P 5M5	+1 (403) 262-3443	+1 (403) 262-6712	jane@chinookcorp.com
@@ -892,10 +892,10 @@ COPY public."Employee" ("EmployeeId", "LastName", "FirstName", "Title", "Reports
 
 
 --
--- Data for Name: Genre; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Genre; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Genre" ("GenreId", "Name") FROM stdin;
+COPY bigenia."Genre" ("GenreId", "Name") FROM stdin;
 1	Rock
 2	Jazz
 3	Metal
@@ -925,10 +925,10 @@ COPY public."Genre" ("GenreId", "Name") FROM stdin;
 
 
 --
--- Data for Name: Invoice; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Invoice; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Invoice" ("InvoiceId", "CustomerId", "InvoiceDate", "BillingAddress", "BillingCity", "BillingState", "BillingCountry", "BillingPostalCode", "Total") FROM stdin;
+COPY bigenia."Invoice" ("InvoiceId", "CustomerId", "InvoiceDate", "BillingAddress", "BillingCity", "BillingState", "BillingCountry", "BillingPostalCode", "Total") FROM stdin;
 1	2	2009-01-01 00:00:00	Theodor-Heuss-Stra�e 34	Stuttgart	\N	Germany	70174	1.98
 2	4	2009-01-02 00:00:00	Ullev�lsveien 14	Oslo	\N	Norway	0171	3.96
 3	8	2009-01-03 00:00:00	Gr�trystraat 63	Brussels	\N	Belgium	1000	5.94
@@ -1345,10 +1345,10 @@ COPY public."Invoice" ("InvoiceId", "CustomerId", "InvoiceDate", "BillingAddress
 
 
 --
--- Data for Name: InvoiceLine; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: InvoiceLine; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."InvoiceLine" ("InvoiceLineId", "InvoiceId", "TrackId", "UnitPrice", "Quantity") FROM stdin;
+COPY bigenia."InvoiceLine" ("InvoiceLineId", "InvoiceId", "TrackId", "UnitPrice", "Quantity") FROM stdin;
 1	1	2	0.99	1
 2	1	4	0.99	1
 3	2	6	0.99	1
@@ -3593,10 +3593,10 @@ COPY public."InvoiceLine" ("InvoiceLineId", "InvoiceId", "TrackId", "UnitPrice",
 
 
 --
--- Data for Name: MediaType; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: MediaType; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."MediaType" ("MediaTypeId", "Name") FROM stdin;
+COPY bigenia."MediaType" ("MediaTypeId", "Name") FROM stdin;
 1	MPEG audio file
 2	Protected AAC audio file
 3	Protected MPEG-4 video file
@@ -3606,10 +3606,10 @@ COPY public."MediaType" ("MediaTypeId", "Name") FROM stdin;
 
 
 --
--- Data for Name: Playlist; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Playlist; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Playlist" ("PlaylistId", "Name") FROM stdin;
+COPY bigenia."Playlist" ("PlaylistId", "Name") FROM stdin;
 1	Music
 2	Movies
 3	TV Shows
@@ -3632,10 +3632,10 @@ COPY public."Playlist" ("PlaylistId", "Name") FROM stdin;
 
 
 --
--- Data for Name: PlaylistTrack; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: PlaylistTrack; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."PlaylistTrack" ("PlaylistId", "TrackId") FROM stdin;
+COPY bigenia."PlaylistTrack" ("PlaylistId", "TrackId") FROM stdin;
 1	3402
 1	3389
 1	3390
@@ -12355,10 +12355,10 @@ COPY public."PlaylistTrack" ("PlaylistId", "TrackId") FROM stdin;
 
 
 --
--- Data for Name: Track; Type: TABLE DATA; Schema: public; Owner: -
+-- Data for Name: Track; Type: TABLE DATA; Schema: bigenia; Owner: -
 --
 
-COPY public."Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Composer", "Milliseconds", "Bytes", "UnitPrice") FROM stdin;
+COPY bigenia."Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Composer", "Milliseconds", "Bytes", "UnitPrice") FROM stdin;
 1	For Those About To Rock (We Salute You)	1	1	1	Angus Young, Malcolm Young, Brian Johnson	343719	11170334	0.99
 2	Balls to the Wall	2	2	1	\N	342562	5510424	0.99
 3	Fast As a Shark	3	2	1	F. Baltes, S. Kaufman, U. Dirkscneider & W. Hoffman	230619	3990994	0.99
@@ -15866,249 +15866,249 @@ COPY public."Track" ("TrackId", "Name", "AlbumId", "MediaTypeId", "GenreId", "Co
 
 
 --
--- Name: Album PK_Album; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Album PK_Album; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Album"
+ALTER TABLE ONLY bigenia."Album"
     ADD CONSTRAINT "PK_Album" PRIMARY KEY ("AlbumId");
 
 
 --
--- Name: Artist PK_Artist; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Artist PK_Artist; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Artist"
+ALTER TABLE ONLY bigenia."Artist"
     ADD CONSTRAINT "PK_Artist" PRIMARY KEY ("ArtistId");
 
 
 --
--- Name: Customer PK_Customer; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Customer PK_Customer; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Customer"
+ALTER TABLE ONLY bigenia."Customer"
     ADD CONSTRAINT "PK_Customer" PRIMARY KEY ("CustomerId");
 
 
 --
--- Name: Employee PK_Employee; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Employee PK_Employee; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Employee"
+ALTER TABLE ONLY bigenia."Employee"
     ADD CONSTRAINT "PK_Employee" PRIMARY KEY ("EmployeeId");
 
 
 --
--- Name: Genre PK_Genre; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Genre PK_Genre; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Genre"
+ALTER TABLE ONLY bigenia."Genre"
     ADD CONSTRAINT "PK_Genre" PRIMARY KEY ("GenreId");
 
 
 --
--- Name: Invoice PK_Invoice; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Invoice PK_Invoice; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Invoice"
+ALTER TABLE ONLY bigenia."Invoice"
     ADD CONSTRAINT "PK_Invoice" PRIMARY KEY ("InvoiceId");
 
 
 --
--- Name: InvoiceLine PK_InvoiceLine; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: InvoiceLine PK_InvoiceLine; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."InvoiceLine"
+ALTER TABLE ONLY bigenia."InvoiceLine"
     ADD CONSTRAINT "PK_InvoiceLine" PRIMARY KEY ("InvoiceLineId");
 
 
 --
--- Name: MediaType PK_MediaType; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: MediaType PK_MediaType; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."MediaType"
+ALTER TABLE ONLY bigenia."MediaType"
     ADD CONSTRAINT "PK_MediaType" PRIMARY KEY ("MediaTypeId");
 
 
 --
--- Name: Playlist PK_Playlist; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Playlist PK_Playlist; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Playlist"
+ALTER TABLE ONLY bigenia."Playlist"
     ADD CONSTRAINT "PK_Playlist" PRIMARY KEY ("PlaylistId");
 
 
 --
--- Name: PlaylistTrack PK_PlaylistTrack; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: PlaylistTrack PK_PlaylistTrack; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."PlaylistTrack"
+ALTER TABLE ONLY bigenia."PlaylistTrack"
     ADD CONSTRAINT "PK_PlaylistTrack" PRIMARY KEY ("PlaylistId", "TrackId");
 
 
 --
--- Name: Track PK_Track; Type: CONSTRAINT; Schema: public; Owner: -
+-- Name: Track PK_Track; Type: CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Track"
+ALTER TABLE ONLY bigenia."Track"
     ADD CONSTRAINT "PK_Track" PRIMARY KEY ("TrackId");
 
 
 --
--- Name: IFK_AlbumArtistId; Type: INDEX; Schema: public; Owner: -
+-- Name: IFK_AlbumArtistId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-CREATE INDEX "IFK_AlbumArtistId" ON public."Album" USING btree ("ArtistId");
-
-
---
--- Name: IFK_CustomerSupportRepId; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "IFK_CustomerSupportRepId" ON public."Customer" USING btree ("SupportRepId");
+CREATE INDEX "IFK_AlbumArtistId" ON bigenia."Album" USING btree ("ArtistId");
 
 
 --
--- Name: IFK_EmployeeReportsTo; Type: INDEX; Schema: public; Owner: -
+-- Name: IFK_CustomerSupportRepId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-CREATE INDEX "IFK_EmployeeReportsTo" ON public."Employee" USING btree ("ReportsTo");
-
-
---
--- Name: IFK_InvoiceCustomerId; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "IFK_InvoiceCustomerId" ON public."Invoice" USING btree ("CustomerId");
+CREATE INDEX "IFK_CustomerSupportRepId" ON bigenia."Customer" USING btree ("SupportRepId");
 
 
 --
--- Name: IFK_InvoiceLineInvoiceId; Type: INDEX; Schema: public; Owner: -
+-- Name: IFK_EmployeeReportsTo; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-CREATE INDEX "IFK_InvoiceLineInvoiceId" ON public."InvoiceLine" USING btree ("InvoiceId");
-
-
---
--- Name: IFK_InvoiceLineTrackId; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "IFK_InvoiceLineTrackId" ON public."InvoiceLine" USING btree ("TrackId");
+CREATE INDEX "IFK_EmployeeReportsTo" ON bigenia."Employee" USING btree ("ReportsTo");
 
 
 --
--- Name: IFK_PlaylistTrackTrackId; Type: INDEX; Schema: public; Owner: -
+-- Name: IFK_InvoiceCustomerId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-CREATE INDEX "IFK_PlaylistTrackTrackId" ON public."PlaylistTrack" USING btree ("TrackId");
-
-
---
--- Name: IFK_TrackAlbumId; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "IFK_TrackAlbumId" ON public."Track" USING btree ("AlbumId");
+CREATE INDEX "IFK_InvoiceCustomerId" ON bigenia."Invoice" USING btree ("CustomerId");
 
 
 --
--- Name: IFK_TrackGenreId; Type: INDEX; Schema: public; Owner: -
+-- Name: IFK_InvoiceLineInvoiceId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-CREATE INDEX "IFK_TrackGenreId" ON public."Track" USING btree ("GenreId");
-
-
---
--- Name: IFK_TrackMediaTypeId; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX "IFK_TrackMediaTypeId" ON public."Track" USING btree ("MediaTypeId");
+CREATE INDEX "IFK_InvoiceLineInvoiceId" ON bigenia."InvoiceLine" USING btree ("InvoiceId");
 
 
 --
--- Name: Album FK_AlbumArtistId; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: IFK_InvoiceLineTrackId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Album"
-    ADD CONSTRAINT "FK_AlbumArtistId" FOREIGN KEY ("ArtistId") REFERENCES public."Artist"("ArtistId");
-
-
---
--- Name: Customer FK_CustomerSupportRepId; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public."Customer"
-    ADD CONSTRAINT "FK_CustomerSupportRepId" FOREIGN KEY ("SupportRepId") REFERENCES public."Employee"("EmployeeId");
+CREATE INDEX "IFK_InvoiceLineTrackId" ON bigenia."InvoiceLine" USING btree ("TrackId");
 
 
 --
--- Name: Employee FK_EmployeeReportsTo; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: IFK_PlaylistTrackTrackId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Employee"
-    ADD CONSTRAINT "FK_EmployeeReportsTo" FOREIGN KEY ("ReportsTo") REFERENCES public."Employee"("EmployeeId");
-
-
---
--- Name: Invoice FK_InvoiceCustomerId; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public."Invoice"
-    ADD CONSTRAINT "FK_InvoiceCustomerId" FOREIGN KEY ("CustomerId") REFERENCES public."Customer"("CustomerId");
+CREATE INDEX "IFK_PlaylistTrackTrackId" ON bigenia."PlaylistTrack" USING btree ("TrackId");
 
 
 --
--- Name: InvoiceLine FK_InvoiceLineInvoiceId; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: IFK_TrackAlbumId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."InvoiceLine"
-    ADD CONSTRAINT "FK_InvoiceLineInvoiceId" FOREIGN KEY ("InvoiceId") REFERENCES public."Invoice"("InvoiceId");
-
-
---
--- Name: InvoiceLine FK_InvoiceLineTrackId; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public."InvoiceLine"
-    ADD CONSTRAINT "FK_InvoiceLineTrackId" FOREIGN KEY ("TrackId") REFERENCES public."Track"("TrackId");
+CREATE INDEX "IFK_TrackAlbumId" ON bigenia."Track" USING btree ("AlbumId");
 
 
 --
--- Name: PlaylistTrack FK_PlaylistTrackPlaylistId; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: IFK_TrackGenreId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."PlaylistTrack"
-    ADD CONSTRAINT "FK_PlaylistTrackPlaylistId" FOREIGN KEY ("PlaylistId") REFERENCES public."Playlist"("PlaylistId");
-
-
---
--- Name: PlaylistTrack FK_PlaylistTrackTrackId; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public."PlaylistTrack"
-    ADD CONSTRAINT "FK_PlaylistTrackTrackId" FOREIGN KEY ("TrackId") REFERENCES public."Track"("TrackId");
+CREATE INDEX "IFK_TrackGenreId" ON bigenia."Track" USING btree ("GenreId");
 
 
 --
--- Name: Track FK_TrackAlbumId; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: IFK_TrackMediaTypeId; Type: INDEX; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Track"
-    ADD CONSTRAINT "FK_TrackAlbumId" FOREIGN KEY ("AlbumId") REFERENCES public."Album"("AlbumId");
-
-
---
--- Name: Track FK_TrackGenreId; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public."Track"
-    ADD CONSTRAINT "FK_TrackGenreId" FOREIGN KEY ("GenreId") REFERENCES public."Genre"("GenreId");
+CREATE INDEX "IFK_TrackMediaTypeId" ON bigenia."Track" USING btree ("MediaTypeId");
 
 
 --
--- Name: Track FK_TrackMediaTypeId; Type: FK CONSTRAINT; Schema: public; Owner: -
+-- Name: Album FK_AlbumArtistId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
 --
 
-ALTER TABLE ONLY public."Track"
-    ADD CONSTRAINT "FK_TrackMediaTypeId" FOREIGN KEY ("MediaTypeId") REFERENCES public."MediaType"("MediaTypeId");
+ALTER TABLE ONLY bigenia."Album"
+    ADD CONSTRAINT "FK_AlbumArtistId" FOREIGN KEY ("ArtistId") REFERENCES bigenia."Artist"("ArtistId");
+
+
+--
+-- Name: Customer FK_CustomerSupportRepId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."Customer"
+    ADD CONSTRAINT "FK_CustomerSupportRepId" FOREIGN KEY ("SupportRepId") REFERENCES bigenia."Employee"("EmployeeId");
+
+
+--
+-- Name: Employee FK_EmployeeReportsTo; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."Employee"
+    ADD CONSTRAINT "FK_EmployeeReportsTo" FOREIGN KEY ("ReportsTo") REFERENCES bigenia."Employee"("EmployeeId");
+
+
+--
+-- Name: Invoice FK_InvoiceCustomerId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."Invoice"
+    ADD CONSTRAINT "FK_InvoiceCustomerId" FOREIGN KEY ("CustomerId") REFERENCES bigenia."Customer"("CustomerId");
+
+
+--
+-- Name: InvoiceLine FK_InvoiceLineInvoiceId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."InvoiceLine"
+    ADD CONSTRAINT "FK_InvoiceLineInvoiceId" FOREIGN KEY ("InvoiceId") REFERENCES bigenia."Invoice"("InvoiceId");
+
+
+--
+-- Name: InvoiceLine FK_InvoiceLineTrackId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."InvoiceLine"
+    ADD CONSTRAINT "FK_InvoiceLineTrackId" FOREIGN KEY ("TrackId") REFERENCES bigenia."Track"("TrackId");
+
+
+--
+-- Name: PlaylistTrack FK_PlaylistTrackPlaylistId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."PlaylistTrack"
+    ADD CONSTRAINT "FK_PlaylistTrackPlaylistId" FOREIGN KEY ("PlaylistId") REFERENCES bigenia."Playlist"("PlaylistId");
+
+
+--
+-- Name: PlaylistTrack FK_PlaylistTrackTrackId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."PlaylistTrack"
+    ADD CONSTRAINT "FK_PlaylistTrackTrackId" FOREIGN KEY ("TrackId") REFERENCES bigenia."Track"("TrackId");
+
+
+--
+-- Name: Track FK_TrackAlbumId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."Track"
+    ADD CONSTRAINT "FK_TrackAlbumId" FOREIGN KEY ("AlbumId") REFERENCES bigenia."Album"("AlbumId");
+
+
+--
+-- Name: Track FK_TrackGenreId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."Track"
+    ADD CONSTRAINT "FK_TrackGenreId" FOREIGN KEY ("GenreId") REFERENCES bigenia."Genre"("GenreId");
+
+
+--
+-- Name: Track FK_TrackMediaTypeId; Type: FK CONSTRAINT; Schema: bigenia; Owner: -
+--
+
+ALTER TABLE ONLY bigenia."Track"
+    ADD CONSTRAINT "FK_TrackMediaTypeId" FOREIGN KEY ("MediaTypeId") REFERENCES bigenia."MediaType"("MediaTypeId");
 
 
 --

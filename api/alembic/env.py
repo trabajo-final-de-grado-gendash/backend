@@ -62,9 +62,16 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+        connection=connection, 
+        target_metadata=target_metadata,
+        version_table_schema="bigenia",
+        include_schemas=True
+    )
 
+    import sqlalchemy as sa
     with context.begin_transaction():
+        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS bigenia;"))
         context.run_migrations()
 
 

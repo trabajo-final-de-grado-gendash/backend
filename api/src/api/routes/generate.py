@@ -8,12 +8,21 @@ from api.models.schemas import (
     GenerateResponse,
     ResponseType,
 )
+from api.models.error_schemas import ErrorResponse
 from api.dependencies import get_pipeline_service, get_result_service, get_session_service
 from decision_agent.models import MessageRole
 
 router = APIRouter(prefix="/api/v1", tags=["generate"])
 
-@router.post("/generate", response_model=GenerateResponse)
+@router.post(
+    "/generate", 
+    response_model=GenerateResponse,
+    responses={
+        400: {"model": ErrorResponse, "description": "Error de validación (SQL prohibido)"},
+        500: {"model": ErrorResponse, "description": "Error interno del pipeline (Timeout/LLM)"},
+        503: {"model": ErrorResponse, "description": "Error de base de datos"},
+    }
+)
 async def generate_visualization(
     request: GenerateRequest,
     pipeline_service: Any = Depends(get_pipeline_service),

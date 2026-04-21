@@ -4,11 +4,16 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.models.schemas import ResultResponse
+from api.models.error_schemas import ErrorResponse
 from api.dependencies import get_result_service
 
 router = APIRouter(prefix="/api/v1", tags=["results"])
 
-@router.get("/results/{result_id}", response_model=ResultResponse)
+@router.get(
+    "/results/{result_id}", 
+    response_model=ResultResponse,
+    responses={404: {"model": ErrorResponse, "description": "Resultado no encontrado"}}
+)
 async def get_result(
     result_id: uuid.UUID,
     result_service: Any = Depends(get_result_service),

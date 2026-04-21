@@ -231,13 +231,118 @@ Recuperar un resultado de visualización guardado.
 
 ---
 
+## PATCH /results/{result_id}/metadata
+
+**TFG-56** — Actualizar metadata del gráfico (título, ejes, layout).
+
+Hace un merge parcial sobre `viz_json.layout`. Solo se actualizan los campos enviados.
+
+### Path Parameters
+
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `result_id` | UUID | ✅ | ID del resultado a actualizar |
+
+### Request
+
+```json
+{
+  "title": "Ventas Mensuales 2025",
+  "xaxis_title": "Mes",
+  "yaxis_title": "Total (USD)",
+  "extra_layout": { "template": "plotly_dark" }
+}
+```
+
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `title` | string | ❌ | — | Nuevo título del gráfico |
+| `xaxis_title` | string | ❌ | — | Nuevo título del eje X |
+| `yaxis_title` | string | ❌ | — | Nuevo título del eje Y |
+| `extra_layout` | object | ❌ | JSON válido | Campos adicionales de Plotly layout (merge) |
+
+> Al menos un campo debe estar presente, de lo contrario se retorna 422.
+
+### Response (200)
+
+```json
+{
+  "result_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "updated_fields": ["title", "xaxis_title"],
+  "plotly_json": { "data": [...], "layout": { "title": {"text": "Ventas Mensuales 2025"}, ... } }
+}
+```
+
+### Error Responses
+
+| Code | Motivo |
+|---|---|
+| 404 | `result_id` no encontrado |
+| 422 | Body vacío (ningún campo proporcionado) |
+
+---
+
+## POST /results/{result_id}/regenerate
+
+**TFG-57** — Modificar el gráfico incrementalmente a partir de un prompt del usuario.
+
+Flujo interno:
+1. Recupera el `GenerationResult` por `result_id` (404 si no existe)
+2. Si `plotly_code` es `null`, retorna 422 (el resultado no puede ser regenerado)
+3. Re-ejecuta el `sql` guardado via `VannaAgent.execute_sql()` para obtener el DataFrame actual
+4. Envía `plotly_code` + prompt a Gemini AI (`VizAgent.modify_chart()`)
+5. Gemini devuelve el código Python modificado
+6. Se ejecuta el código con el DataFrame real (sandbox) con loop de corrección automático
+7. Persiste el nuevo `viz_json` + `plotly_code` sincronizados en BD
+8. Retorna el resultado actualizado
+
+> **Nota de diseño**: Se usa `plotly_code` en lugar de `viz_json` para el prompt a Gemini porque el código Python (~5-20 líneas) consume significativamente menos tokens que el JSON serializado de Plotly (~5k-8k tokens con templates). Además garantiza que `plotly_code` y `viz_json` en BD siempre estén sincronizados.
+
+### Path Parameters
+
+| Parameter | Type | Required | Notes |
+|---|---|---|---|
+| `result_id` | UUID | ✅ | ID del resultado a modificar |
+
+### Request
+
+```json
+{
+  "prompt": "Cambiá el color de las barras a azul y agrega un fondo oscuro"
+}
+```
+
+| Field | Type | Required | Constraints | Notes |
+|---|---|---|---|---|
+| `prompt` | string | ✅ | min_length=1, max_length=2000 | Instrucción para modificar el gráfico |
+
+### Response (200)
+
+```json
+{
+  "result_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "plotly_json": { "data": [...], "layout": {...} },
+  "chart_type": "bar"
+}
+```
+
+### Error Responses
+
+| Code | Motivo |
+|---|---|
+| 404 | `result_id` no encontrado |
+| 422 | `prompt` vacío o `plotly_code` es `null` para ese resultado |
+| 500 | Fallo al re-ejecutar el SQL o error interno del agente Gemini AI |
+
+---
+
 ## Common Headers
 
 ### Request Headers
 
 | Header | Value | Notes |
 |---|---|---|
-| `Content-Type` | `application/json` | Requerido para POST |
+| `Content-Type` | `application/json` | Requerido para POST y PATCH |
 
 ### Response Headers
 
@@ -255,3 +360,17 @@ Recuperar un resultado de visualización guardado.
 | `"visualization"` | Pipeline exitoso | `plotly_json`, `sql`, `result_id`, `plotly_code`, `chart_type` |
 | `"clarification"` | Consulta ambigua / múltiples intenciones | `message` con pregunta de seguimiento |
 | `"message"` | Fuera de alcance / saludo / error descriptivo | `message` con texto plano |
+
+---
+
+## Endpoints Summary
+
+| Method | Path | Subtarea | Descripción |
+|---|---|---|---|
+| POST | `/generate` | — | Generar visualización desde lenguaje natural |
+| GET | `/health` | — | Estado de salud de los componentes |
+| GET | `/sessions/{session_id}/history` | — | Historial de mensajes de sesión |
+| GET | `/results/{result_id}` | — | Obtener resultado de visualización |
+| PATCH | `/results/{result_id}/metadata` | TFG-56 | Actualizar título, ejes y layout |
+| POST | `/results/{result_id}/regenerate` | TFG-57 | Modificar gráfico con prompt via Gemini AI |
+

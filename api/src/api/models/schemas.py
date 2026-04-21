@@ -89,6 +89,48 @@ class ResultResponse(BaseModel):
     chart_type: Optional[str] = None
     created_at: datetime
 
+class UpdateMetadataRequest(BaseModel):
+    """Request al endpoint PATCH /api/v1/results/{result_id}/metadata.
+
+    Campos opcionales de layout Plotly. Se hace merge sobre viz_json.layout.
+    """
+
+    title: Optional[str] = Field(None, description="Nuevo título del gráfico")
+    xaxis_title: Optional[str] = Field(None, description="Nuevo título del eje X")
+    yaxis_title: Optional[str] = Field(None, description="Nuevo título del eje Y")
+    extra_layout: Optional[dict[str, Any]] = Field(
+        None,
+        description="Campos adicionales de layout Plotly para merge",
+    )
+
+
+class UpdateMetadataResponse(BaseModel):
+    """Response tras actualizar metadata del gráfico."""
+
+    result_id: uuid.UUID
+    updated_fields: list[str]
+    plotly_json: dict[str, Any]
+
+
+class RegenerateChartRequest(BaseModel):
+    """Request al endpoint POST /api/v1/results/{result_id}/regenerate."""
+
+    prompt: str = Field(
+        ...,
+        min_length=1,
+        max_length=2000,
+        description="Instrucción en lenguaje natural para modificar el gráfico",
+    )
+
+
+class RegenerateChartResponse(BaseModel):
+    """Response tras regenerar un gráfico con un prompt."""
+
+    result_id: uuid.UUID
+    plotly_json: dict[str, Any]
+    plotly_code: Optional[str] = None
+    chart_type: Optional[str] = None
+
 
 # ---------------------------------------------------------------------------
 # Error response (unified format)

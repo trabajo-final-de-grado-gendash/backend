@@ -17,6 +17,8 @@ DECISION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Analyz
 {sample_values}
 - Unique value counts per column:
 {unique_counts}
+- Complete unique values for categorical columns (if <= 50 values):
+{unique_values}
 
 ## Allowed Chart Types
 {allowed_charts}

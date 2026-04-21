@@ -53,7 +53,7 @@ Unidad atómica del historial de sesión.
 
 ## Entity: GenerationResult
 
-Registro persistido de un pipeline exitoso completo.
+Registro persistido de un pipeline exitoso completo. Puede ser modificado posteriormente mediante los endpoints de edición de gráficos (TFG-55).
 
 | Field | Type | Constraints | Notes |
 |---|---|---|---|
@@ -61,10 +61,11 @@ Registro persistido de un pipeline exitoso completo.
 | `session_id` | UUID | FK → Session.id, NOT NULL | Sesión asociada |
 | `query` | Text | NOT NULL | Consulta original del usuario |
 | `sql` | Text | NOT NULL | SQL generado por Vanna AI |
-| `viz_json` | JSONB | NOT NULL | JSON Plotly completo de la visualización |
+| `viz_json` | JSONB | NOT NULL | JSON Plotly completo de la visualización (editable) |
 | `plotly_code` | Text | NULLABLE | Código Python generado (opcional, útil para debug) |
 | `chart_type` | VARCHAR(50) | NULLABLE | Tipo de gráfico generado |
 | `created_at` | datetime | NOT NULL, default=now() | Timestamp de creación |
+| `updated_at` | datetime | NOT NULL, default=now() | Timestamp de última modificación |
 
 **Relationships**:
 - GenerationResult `N` → `1` Session
@@ -75,7 +76,9 @@ Registro persistido de un pipeline exitoso completo.
 - `viz_json` debe ser JSON Plotly válido
 - `sql` debe haber pasado la validación de SQL (solo SELECT)
 
-**State transitions**: N/A (inmutable una vez creado)
+**State transitions**:
+- `CREATED` → (PATCH /metadata) → `UPDATED` — merge parcial de layout (título, ejes, extra_layout)
+- `CREATED` / `UPDATED` → (POST /regenerate) → `UPDATED` — reemplazo de viz_json via Gemini AI
 
 ---
 
@@ -110,6 +113,7 @@ erDiagram
         text plotly_code
         varchar chart_type
         datetime created_at
+        datetime updated_at
     }
 ```
 
@@ -218,7 +222,52 @@ class ResultResponse(BaseModel):
     plotly_code: str | None = None
     chart_type: str | None = None
     created_at: datetime
+
+
+# --- TFG-56: Actualizar metadata del gráfico ---
+
+class UpdateMetadataRequest(BaseModel):
+    """Request al endpoint PATCH /api/v1/results/{result_id}/metadata"""
+    title: str | None = None
+    xaxis_title: str | None = None
+    yaxis_title: str | None = None
+    extra_layout: dict | None = None
+
+class UpdateMetadataResponse(BaseModel):
+    """Response tras actualizar metadata del gráfico"""
+    result_id: UUID
+    updated_fields: list[str]
+    plotly_json: dict
+
+
+# --- TFG-57: Regenerar gráfico con prompt ---
+
+class RegenerateChartRequest(BaseModel):
+    """Request al endpoint POST /api/v1/results/{result_id}/regenerate"""
+    prompt: str = Field(..., min_length=1, max_length=2000)
+
+class RegenerateChartResponse(BaseModel):
+    """Response tras regenerar gráfico con prompt"""
+    result_id: UUID
+    plotly_json: dict
+    chart_type: str | None = None
+
+
+# --- Modelo interno VizAgent (structured output Gemini) ---
+
+class ChartModificationResponse(BaseModel):
+    """
+    Structured output que Gemini debe retornar al modificar un gráfico.
+    Usado internamente por GeminiClient.modify_chart_code().
+    """
+    modified_code: str   # Código Python Plotly modificado (sin markdown, solo código)
+    changes_description: str  # Descripción breve de los cambios realizados
 ```
+
+> **Nota de diseño — código vs JSON**: El endpoint `/regenerate` envía el `plotly_code` (Python) a Gemini en lugar del `viz_json` (JSON Plotly) por dos razones:
+> 1. **Tokens**: El JSON Plotly incluye un template completo con escalas de color, ejes y propiedades (~5k-8k tokens de boilerplate). El código Python equivalente son ~5-20 líneas.
+> 2. **Consistencia**: Al modificar el código y ejecutarlo, `plotly_code` y `viz_json` en BD siempre quedan sincronizados. Modificar el JSON directamente dejaba el `plotly_code` desactualizado.
+
 
 ---
 

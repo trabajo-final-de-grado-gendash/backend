@@ -28,7 +28,7 @@ class DataFrameMetadata(BaseModel):
     null_counts: Dict[str, int]
     sample_values: Dict[str, List[Any]]  # Primeras 5 filas de cada columna
     unique_counts: Dict[str, int]  # Cantidad de valores únicos por columna
-
+    unique_values: Dict[str, List[Any]] = Field(default_factory=dict)  # Valores únicos (limitado a <=50)
 
 class VizAgentOutput(BaseModel):
     """Output del agente de visualización"""
@@ -85,3 +85,17 @@ class CodeCorrectionResponse(BaseModel):
     
     corrected_code: str = Field(..., description="Código Python corregido y ejecutable")
     explanation: str = Field(..., description="Explicación breve de qué se corrigió")
+
+
+class ChartModificationResponse(BaseModel):
+    """Respuesta de modificación de gráfico usando structured output"""
+    model_config = ConfigDict(extra='forbid')
+    
+    modified_code: str = Field(
+        ..., 
+        description="Código Python Plotly modificado según la instrucción del usuario. Solo el código, sin markdown ni explicaciones."
+    )
+    changes_description: str = Field(
+        ..., 
+        description="Descripción breve de los cambios realizados"
+    )

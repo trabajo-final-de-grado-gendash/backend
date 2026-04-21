@@ -10,6 +10,7 @@ from .models import (
     GeminiResponse,
     CorrectionRequest,
     CodeCorrectionResponse,
+    ChartModificationResponse,
 )
 from .agent import VizAgent
 from .config import Settings
@@ -26,6 +27,7 @@ __all__ = [
     "GeminiResponse",
     "CorrectionRequest",
     "CodeCorrectionResponse",
+    "ChartModificationResponse",
     "VizAgent",
     "Settings",
     "DataFrameAnalyzer",

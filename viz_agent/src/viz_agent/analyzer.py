@@ -28,11 +28,17 @@ class DataFrameAnalyzer:
         
         # 4. Muestrear valores para dar contexto a Gemini
         sample_values = {}
+        unique_values = {}
         for col in df.columns:
             if col in potential_id_columns:
                 sample_values[col] = ["[HIGH_CARDINALITY_COLUMN]"]
             else:
                 sample_values[col] = df[col].dropna().head(5).tolist()
+                
+            # Si es categórica y tiene pocos valores, enviamos todos los únicos
+            # para que Gemini sepa exactamente qué etiquetas existen (ej: países)
+            if col in categorical_cols and unique_counts[col] <= 50:
+                unique_values[col] = df[col].dropna().unique().tolist()
         
         # 5. Contar nulls
         null_counts = df.isnull().sum().to_dict()
@@ -46,7 +52,8 @@ class DataFrameAnalyzer:
             datetime_columns=datetime_cols,
             null_counts=null_counts,
             sample_values=sample_values,
-            unique_counts=unique_counts
+            unique_counts=unique_counts,
+            unique_values=unique_values
         )
     
     def validate_dataframe(self, df: pd.DataFrame) -> Tuple[bool, Optional[str]]:

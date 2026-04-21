@@ -29,7 +29,7 @@ Guía rápida para levantar el entorno de desarrollo del sistema GenBI con confi
    - `GEMINI_API_KEY`: Tu API Key de Google AI Studio.
    - `APP_DB_URL`: URL de conexión a la base de datos de la aplicación.
    - `SOURCE_DB_URL`: URL de conexión a la base de datos de datos (ej: Chinook).
-   - `GEMINI_MODEL`: Modelo a usar (ej: `gemini-1.5-flash`).
+   - `GEMINI_MODEL`: Modelo a usar (ej: `gemini-2.5-flash`).
 
 *Nota: No es necesario crear archivos .env dentro de cada carpeta de agente, ya que todos leerán el archivo de la raíz automáticamente.*
 

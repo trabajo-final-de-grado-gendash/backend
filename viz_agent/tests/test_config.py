@@ -16,7 +16,7 @@ def test_config_init():
 def test_config_default_model():
     """Test modelo por defecto"""
     settings = Settings(GEMINI_API_KEY="test_key")
-    assert settings.GEMINI_MODEL == "gemini-1.5-flash"
+    assert settings.GEMINI_MODEL == "gemini-2.5-flash"
 
 def test_config_from_env(monkeypatch):
     """Test carga desde variables de entorno"""

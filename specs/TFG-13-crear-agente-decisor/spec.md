@@ -143,6 +143,47 @@ El sistema debe tener un wrapper unificado que permita importar y usar los agent
 
 ---
 
+### User Story 7 - Edición de Gráficos Generados (Priority: P2) *(TFG-55)*
+
+Una vez generada una visualización, el usuario debe poder modificarla sin tener que re-ejecutar el pipeline completo. Esto cubre dos patrones de uso: ajustes estéticos (título, ejes) y modificaciones expresadas en lenguaje natural.
+
+**Why this priority**: La capacidad de editar un gráfico ya generado reduce la fricción del usuario y permite iteraciones rápidas de ajuste visual sin re-ejecutar queries o esperar al agente de SQL. Es un requisito directo del Sprint 3 ("Edición de gráficos").
+
+**Independent Test**: Puede ser probado creando un resultado via `/generate`, luego llamando a los endpoints de edición y verificando que el `viz_json` almacenado en BD refleja los cambios correctamente.
+
+**Acceptance Scenarios**:
+
+1. **Scenario**: Actualizar metadata del gráfico (TFG-56)
+   - **Given** un `result_id` válido con un gráfico generado
+   - **When** el usuario envía `PATCH /results/{result_id}/metadata` con `{"title": "Nuevo Título", "xaxis_title": "Mes"}`
+   - **Then** la API debe:
+     - Recuperar el `viz_json` actual del resultado
+     - Hacer merge de los campos sobre `viz_json.layout` (sin sobrescribir campos no enviados)
+     - Persistir el `viz_json` actualizado en BD
+     - Retornar el `plotly_json` actualizado con los campos modificados listados en `updated_fields`
+
+2. **Scenario**: Campos opcionales — solo se actualiza lo enviado
+   - **Given** un gráfico con título "Original", eje X "Cat" y eje Y "Val"
+   - **When** se envía `{"title": "Nuevo"}`
+   - **Then** solo el título cambia; los ejes X e Y conservan sus valores originales
+
+3. **Scenario**: Regenerar gráfico con prompt (TFG-57)
+   - **Given** un `result_id` válido
+   - **When** el usuario envía `POST /results/{result_id}/regenerate` con `{"prompt": "Cambiá el color a azul"}`
+   - **Then** la API debe:
+     - Tomar el `viz_json` actual del resultado
+     - Enviarlo a Gemini AI junto con el prompt del usuario
+     - Recibir el `viz_json` modificado incorporando los cambios pedidos
+     - Actualizar el `viz_json` en BD
+     - Retornar el nuevo `plotly_json` con el `result_id` original
+
+4. **Scenario**: `result_id` inexistente
+   - **Given** un UUID que no corresponde a ningún resultado
+   - **When** se llama a cualquiera de los dos endpoints de edición
+   - **Then** la API debe retornar `404 Not Found`
+
+---
+
 ### User Story 5 - Persistencia de Resultados de Visualización (Priority: P2)
 
 Cada vez que el pipeline completo llega a generar una visualización exitosa, el sistema debe guardar automáticamente el resultado (consulta original, SQL generado, JSON de visualización) en base de datos. Esto permite recuperar dashboards previos y construir un historial de análisis.
@@ -300,6 +341,19 @@ El sistema mantiene el historial de mensajes de cada sesión de usuario en base 
   
   El frontend usa este campo para saber cuándo renderizar un gráfico, cuándo mostrar una pregunta de seguimiento y cuándo mostrar solo un mensaje de texto
 
+- **FR-024**: *(TFG-56)* La API REST DEBE exponer un endpoint `PATCH /results/{result_id}/metadata` que permita actualizar el título, el título del eje X, el título del eje Y y campos adicionales de layout de un `GenerationResult` existente. La actualización es un merge parcial: solo se modifican los campos enviados en el body; los demás se conservan. Si el `result_id` no existe, DEBE retornar 404. Si no se envía ningún campo, DEBE retornar 422.
+
+- **FR-025**: *(TFG-57)* La API REST DEBE exponer un endpoint `POST /results/{result_id}/regenerate` que reciba un prompt en lenguaje natural y modifique el gráfico de forma incremental. El flujo DEBE ser:
+  1. Recuperar el `GenerationResult` por `result_id` (404 si no existe)
+  2. Si `plotly_code` es `null`, retornar 422 (el resultado no puede ser regenerado)
+  3. Re-ejecutar el `sql` guardado via `VannaAgent.execute_sql()` para obtener el DataFrame real
+  4. Invocar `VizAgent.modify_chart(plotly_code, dataframe, prompt)` que envía el código Python + prompt a Gemini AI
+  5. Gemini devuelve el código Python modificado
+  6. Ejecutar el código en el sandbox con el DataFrame real; si falla, se realizan reintentos de corrección automáticos (máx `MAX_CORRECT_ATTEMPTS`)
+  7. Persistir el nuevo `viz_json` + `plotly_code` sincronizados en BD (`updated_at` se actualiza automáticamente)
+  8. Retornar el resultado actualizado al cliente
+  Si el agente falla tras todos los reintentos, DEBE retornar 500 con mensaje descriptivo.
+
 ### Non-Functional Requirements
 
 - **NFR-001**: El pipeline completo (lenguaje natural → visualización) DEBE completarse en menos de 15 segundos para consultas sobre datasets de hasta 50,000 filas
@@ -342,7 +396,7 @@ El sistema mantiene el historial de mensajes de cada sesión de usuario en base 
 
 - **Mensaje de Conversación (ConversationMessage)**: Unidad atómica del historial de sesión. Contiene el `role` (user o system), el `content` (texto de la consulta o respuesta), el `session_id` al que pertenece y el `timestamp`.
 
-- **Resultado de Generación (GenerationResult)**: Registro persistido de un pipeline exitoso. Contiene la `query` original, el `sql` generado, el `viz_json` (JSON Plotly completo), el `session_id`, el `result_id` y el `timestamp` de creación.
+- **Resultado de Generación (GenerationResult)**: Registro persistido de un pipeline exitoso. Contiene la `query` original, el `sql` generado, el `viz_json` (JSON Plotly completo, editable post-generación), el `session_id`, el `result_id`, el `created_at` y el `updated_at` (actualizado con cada edición). Puede ser modificado mediante los endpoints de edición de gráficos (TFG-55).
 
 ## Success Criteria *(mandatory)*
 

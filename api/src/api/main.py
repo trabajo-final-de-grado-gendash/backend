@@ -4,7 +4,7 @@ main.py — Factory de la app FastAPI.
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import Settings
@@ -25,6 +25,7 @@ def create_app() -> FastAPI:
     
     from fastapi import Request
     from fastapi.responses import JSONResponse
+    from fastapi import HTTPException
     from decision_agent.exceptions import SQLValidationError, PipelineError
     from sqlalchemy.exc import DBAPIError
 
@@ -67,6 +68,28 @@ def create_app() -> FastAPI:
                 "error_type": "database_error",
                 "message": "Fallo de conexión o consulta de base de datos.",
                 "context": {"detail": str(exc.orig) if hasattr(exc, "orig") else str(exc)}
+            }
+        )
+
+    @app.exception_handler(HTTPException)
+    async def http_exception_handler(request: Request, exc: HTTPException):
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={
+                "error_type": "http_error",
+                "message": str(exc.detail),
+                "context": {}
+            }
+        )
+
+    @app.exception_handler(Exception)
+    async def generic_exception_handler(request: Request, exc: Exception):
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error_type": "internal_server_error",
+                "message": "Ha ocurrido un error inesperado en el servidor.",
+                "context": {"detail": str(exc)}
             }
         )
 

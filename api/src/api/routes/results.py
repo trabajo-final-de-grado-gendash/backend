@@ -54,7 +54,14 @@ async def get_result(
     )
 
 
-@router.patch("/results/{result_id}/metadata", response_model=UpdateMetadataResponse)
+@router.patch(
+    "/results/{result_id}/metadata", 
+    response_model=UpdateMetadataResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Resultado no encontrado"},
+        422: {"description": "Error de validación de campos"}
+    }
+)
 async def update_chart_metadata(
     result_id: uuid.UUID,
     request: UpdateMetadataRequest,
@@ -91,7 +98,15 @@ async def update_chart_metadata(
     )
 
 
-@router.post("/results/{result_id}/regenerate", response_model=RegenerateChartResponse)
+@router.post(
+    "/results/{result_id}/regenerate", 
+    response_model=RegenerateChartResponse,
+    responses={
+        404: {"model": ErrorResponse, "description": "Resultado no encontrado"},
+        422: {"description": "Este resultado no tiene código Python o entrada inválida"},
+        500: {"model": ErrorResponse, "description": "Error al re-ejecutar SQL o en VizAgent"},
+    }
+)
 async def regenerate_chart(
     result_id: uuid.UUID,
     request: RegenerateChartRequest,

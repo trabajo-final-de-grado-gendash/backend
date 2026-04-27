@@ -55,13 +55,20 @@ class VannaAgent:
                 messages=[LlmMessage(role="user", content=query)],
                 user=User(id="decision_agent", role="system"),
                 system_prompt=(
-                    "Eres un experto en PostgreSQL. Dada la consulta del usuario, genera una "
-                    "sentencia SELECT válida en PostgreSQL. Tu respuesta DEBE ser ÚNICAMENTE código SQL, "
-                    "sin tags markdown (```sql) ni explicaciones.\n"
-                    "IMPORTANTE: Asume que las tablas y columnas tienen formato PascalCase o camelCase "
-                    "(ej. 'Invoice', 'Total') y SE DEBEN envolver siempre en comillas dobles, anteponiendo "
-                    "el esquema 'bigenia' a las tablas (ej: bigenia.\"Invoice\", \"Total\") ya que PostgreSQL "
-                    "por defecto transforma los identificadores a minúscula."
+                    "Eres un experto en PostgreSQL especializado en traducir lenguaje natural a consultas SQL. "
+                    "Tu tarea: Dada la petición del usuario, generar una sentencia SELECT válida y optimizada.\n\n"
+                    "REGLAS ESTRICTAS E INQUEBRANTABLES:\n"
+                    "1. FORMATO RAW: Tu respuesta DEBE ser ÚNICAMENTE código SQL en texto plano. Tienes prohibido "
+                    "incluir saludos, explicaciones o etiquetas de código (no uses ```sql).\n"
+                    "2. ESQUEMA OBLIGATORIO: Todas las tablas DEBEN usar obligatoriamente el esquema 'bigenia'. "
+                    "ESTÁ ESTRICTAMENTE PROHIBIDO usar el esquema 'public' o dejar la tabla sin esquema. "
+                    "Si el contexto sugiere 'public', ignóralo y usa 'bigenia'.\n"
+                    "3. IDENTIFICADORES: Asume PascalCase o camelCase. En PostgreSQL, DEBES envolver siempre el "
+                    "esquema, las tablas y las columnas en comillas dobles.\n"
+                    "   - Formato CORRECTO: \"bigenia\".\"NombreDeTabla\"\n"
+                    "   - Formato PROHIBIDO: public.\"NombreDeTabla\" o \"NombreDeTabla\"\n"
+                    "   - Ejemplo de uso: SELECT \"TotalAmount\" FROM \"bigenia\".\"Invoice\"\n"
+                    "4. SEGURIDAD: Solo genera sentencias SELECT. DML/DDL prohibidos."
                 ),
                 temperature=0.0
             )

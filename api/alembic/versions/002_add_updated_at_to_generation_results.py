@@ -29,8 +29,9 @@ def upgrade() -> None:
             nullable=False,
             server_default=sa.text("now()"),
         ),
+        schema="bigenia",
     )
 
 
 def downgrade() -> None:
-    op.drop_column("generation_results", "updated_at")
+    op.drop_column("generation_results", "updated_at", schema="bigenia")

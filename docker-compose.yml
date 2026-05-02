@@ -49,6 +49,13 @@ services:
       - .env
     volumes:
       - ./logs:/app/logs
+      # Hot-reload: monta el código fuente local sobre el COPY del build.
+      # Como los paquetes están instalados con -e (editable), Python los
+      # ejecuta directamente desde estos paths, reflejando cambios sin rebuild.
+      - ./api/src:/app/api/src
+      - ./decision_agent/src:/app/decision_agent/src
+      - ./vanna_agent/src:/app/vanna_agent/src
+      - ./viz_agent/src:/app/viz_agent/src
 
 volumes:
   postgres_data:

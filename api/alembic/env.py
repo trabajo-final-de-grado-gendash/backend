@@ -62,16 +62,18 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
+    import sqlalchemy as sa
+
+    connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS bigenia;"))
+
     context.configure(
-        connection=connection, 
+        connection=connection,
         target_metadata=target_metadata,
         version_table_schema="bigenia",
-        include_schemas=True
+        include_schemas=True,
     )
 
-    import sqlalchemy as sa
     with context.begin_transaction():
-        connection.execute(sa.text("CREATE SCHEMA IF NOT EXISTS bigenia;"))
         context.run_migrations()
 
 
@@ -86,7 +88,7 @@ async def run_async_migrations() -> None:
         poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
+    async with connectable.begin() as connection:
         await connection.run_sync(do_run_migrations)
 
     await connectable.dispose()

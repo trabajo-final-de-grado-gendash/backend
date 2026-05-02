@@ -100,12 +100,12 @@ class ConversationMessage(Base):
         nullable=False,
     )
     role: Mapped[str] = mapped_column(
-        Enum("user", "system", name="message_role_enum"),
+        Enum("user", "system", name="message_role_enum", schema="bigenia"),
         nullable=False,
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
     response_type: Mapped[Optional[str]] = mapped_column(
-        Enum("visualization", "clarification", "message", name="response_type_enum"),
+        Enum("visualization", "clarification", "message", name="response_type_enum", schema="bigenia"),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(

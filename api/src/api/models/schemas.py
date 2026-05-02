@@ -78,6 +78,20 @@ class SessionHistoryResponse(BaseModel):
     messages: list[MessageItem]
 
 
+class SessionSummary(BaseModel):
+    """Resumen de una sesión para listar en la UI."""
+
+    session_id: uuid.UUID
+    title: str
+    created_at: datetime
+
+
+class SessionListResponse(BaseModel):
+    """Response del endpoint GET /api/v1/sessions."""
+
+    sessions: list[SessionSummary]
+
+
 class ResultResponse(BaseModel):
     """Response del endpoint GET /api/v1/results/{result_id}."""
 

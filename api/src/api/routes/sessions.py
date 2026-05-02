@@ -3,11 +3,25 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
 
-from api.models.schemas import SessionHistoryResponse
+from api.models.schemas import SessionHistoryResponse, SessionListResponse
 from api.models.error_schemas import ErrorResponse
 from api.dependencies import get_session_service
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
+
+@router.get(
+    "/sessions",
+    response_model=SessionListResponse,
+)
+async def get_all_sessions(
+    session_service: Any = Depends(get_session_service)
+):
+    """
+    Retrieve a list of all sessions with their first message as title.
+    """
+    sessions = await session_service.get_all_sessions()
+    return SessionListResponse(sessions=sessions)
+
 
 @router.get(
     "/sessions/{session_id}/history", 

@@ -90,3 +90,30 @@ class SessionService:
         stmt = select(Session).where(Session.id == session_id)
         result = await self.db.execute(stmt)
         return result.scalars().first()
+
+    async def get_all_sessions(self) -> list[dict[str, Any]]:
+        subq = (
+            select(ConversationMessage.session_id, ConversationMessage.content)
+            .distinct(ConversationMessage.session_id)
+            .order_by(ConversationMessage.session_id, ConversationMessage.created_at.asc())
+            .subquery()
+        )
+        
+        stmt = (
+            select(Session.id, Session.created_at, subq.c.content)
+            .outerjoin(subq, Session.id == subq.c.session_id)
+            .order_by(desc(Session.created_at))
+        )
+        
+        result = await self.db.execute(stmt)
+        rows = result.all()
+        
+        sessions = []
+        for row in rows:
+            sessions.append({
+                "session_id": row.id,
+                "created_at": row.created_at,
+                "title": row.content if row.content else "Nueva Sesión"
+            })
+            
+        return sessions

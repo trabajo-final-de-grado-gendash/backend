@@ -44,27 +44,17 @@ async def generate_visualization(
         conversation_history=history
     )
     
-    # Save the conversation messages with try/except
+    # Save the USER conversation message
     try:
         await session_service.save_message(
             session_id=session_id, 
             role=MessageRole.USER, 
             content=request.query
         )
-        
-        # Only save system messages with content (messages, clarification) or sql if visualization
-        content_to_save = output.sql if output.response_type == ResponseType.VISUALIZATION else output.message
-        
-        await session_service.save_message(
-            session_id=session_id,
-            role=MessageRole.SYSTEM,
-            content=content_to_save or "(No content)",
-            response_type=output.response_type
-        )
     except Exception as e:
         import structlog
         log = structlog.get_logger("api.routes.generate")
-        log.error("failed_to_save_message", error=str(e), session_id=str(session_id))
+        log.error("failed_to_save_user_message", error=str(e), session_id=str(session_id))
     
     # Parse output and convert to API model GenerateResponse
     plotly_json = None
@@ -104,6 +94,21 @@ async def generate_visualization(
             import structlog
             log = structlog.get_logger("api.routes.generate")
             log.error("failed_to_save_result", error=str(e), session_id=str(session_id))
+
+    # Save SYSTEM message, now with result_id if available
+    try:
+        content_to_save = output.sql if output.response_type == ResponseType.VISUALIZATION else output.message
+        await session_service.save_message(
+            session_id=session_id,
+            role=MessageRole.SYSTEM,
+            content=content_to_save or "(No content)",
+            response_type=output.response_type,
+            result_id=result_id
+        )
+    except Exception as e:
+        import structlog
+        log = structlog.get_logger("api.routes.generate")
+        log.error("failed_to_save_system_message", error=str(e), session_id=str(session_id))
     
     return GenerateResponse(
         response_type=output.response_type.value,

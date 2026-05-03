@@ -75,6 +75,43 @@ class Session(Base):
         return f"<Session id={self.id} created_at={self.created_at}>"
 
 
+class Project(Base):
+    """
+    Agrupador de gráficos generados.
+    """
+
+    __tablename__ = "projects"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        onupdate=_utcnow,
+        server_default=func.now(),
+    )
+
+    # Relationships
+    results: Mapped[list[GenerationResult]] = relationship(
+        "GenerationResult",
+        back_populates="project",
+    )
+
+    def __repr__(self) -> str:
+        return f"<Project id={self.id} name={self.name}>"
+
+
 class ConversationMessage(Base):
     """
     Unidad atómica del historial de sesión.
@@ -106,6 +143,11 @@ class ConversationMessage(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     response_type: Mapped[Optional[str]] = mapped_column(
         Enum("visualization", "clarification", "message", name="response_type_enum", schema="bigenia"),
+        nullable=True,
+    )
+    result_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("generation_results.id", ondelete="SET NULL"),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -149,6 +191,11 @@ class GenerationResult(Base):
         ForeignKey("sessions.id", ondelete="CASCADE"),
         nullable=False,
     )
+    project_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("projects.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     query: Mapped[str] = mapped_column(Text, nullable=False)
     sql: Mapped[str] = mapped_column(Text, nullable=False)
     viz_json: Mapped[dict] = mapped_column(JSONB, nullable=False)
@@ -170,6 +217,7 @@ class GenerationResult(Base):
 
     # Relationships
     session: Mapped[Session] = relationship("Session", back_populates="results")
+    project: Mapped[Optional[Project]] = relationship("Project", back_populates="results")
 
     def __repr__(self) -> str:
         return (

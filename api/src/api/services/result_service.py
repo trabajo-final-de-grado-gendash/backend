@@ -46,6 +46,11 @@ class ResultService:
         res = await self.db.execute(stmt)
         return res.scalars().first()
 
+    async def get_all_results(self) -> list[GenerationResult]:
+        stmt = select(GenerationResult).order_by(GenerationResult.created_at.desc())
+        res = await self.db.execute(stmt)
+        return res.scalars().all()
+
     async def update_metadata(
         self,
         result_id: uuid.UUID,

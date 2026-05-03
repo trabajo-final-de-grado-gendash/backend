@@ -69,6 +69,8 @@ class MessageItem(BaseModel):
     content: str
     response_type: Optional[ResponseType] = None
     timestamp: datetime
+    result_id: Optional[uuid.UUID] = None
+    plotly_json: Optional[dict[str, Any]] = None
 
 
 class SessionHistoryResponse(BaseModel):
@@ -101,7 +103,30 @@ class ResultResponse(BaseModel):
     plotly_json: dict[str, Any]
     plotly_code: Optional[str] = None
     chart_type: Optional[str] = None
+    project_id: Optional[uuid.UUID] = None
     created_at: datetime
+
+
+class ProjectCreate(BaseModel):
+    """Request para crear un nuevo proyecto."""
+    
+    name: str = Field(..., min_length=1, max_length=255, description="Nombre del proyecto")
+
+
+class ProjectResponse(BaseModel):
+    """Información de un proyecto."""
+
+    id: uuid.UUID
+    name: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class ProjectListResponse(BaseModel):
+    """Response del endpoint GET /api/v1/projects."""
+
+    projects: list[ProjectResponse]
+
 
 class UpdateMetadataRequest(BaseModel):
     """Request al endpoint PATCH /api/v1/results/{result_id}/metadata.

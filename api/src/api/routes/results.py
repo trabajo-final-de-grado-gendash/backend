@@ -28,6 +28,31 @@ log = structlog.get_logger("api.routes.results")
 router = APIRouter(prefix="/api/v1", tags=["results"])
 
 @router.get(
+    "/results",
+    response_model=list[ResultResponse],
+)
+async def get_all_results(
+    result_service: Any = Depends(get_result_service),
+):
+    """
+    Retrieve all saved visualization results across all projects.
+    """
+    results = await result_service.get_all_results()
+    return [
+        ResultResponse(
+            result_id=r.id,
+            query=r.query,
+            sql=r.sql,
+            plotly_json=r.viz_json,
+            plotly_code=r.plotly_code,
+            chart_type=r.chart_type,
+            project_id=r.project_id,
+            created_at=r.created_at
+        ) for r in results
+    ]
+
+
+@router.get(
     "/results/{result_id}", 
     response_model=ResultResponse,
     responses={404: {"model": ErrorResponse, "description": "Resultado no encontrado"}}
@@ -50,6 +75,7 @@ async def get_result(
         plotly_json=result.viz_json,
         plotly_code=result.plotly_code,
         chart_type=result.chart_type,
+        project_id=result.project_id,
         created_at=result.created_at
     )
 

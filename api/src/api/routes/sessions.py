@@ -1,11 +1,14 @@
 import uuid
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.models.schemas import SessionHistoryResponse, SessionListResponse
 from api.models.error_schemas import ErrorResponse
 from api.dependencies import get_session_service
+
+log = structlog.get_logger("api.routes.sessions")
 
 router = APIRouter(prefix="/api/v1", tags=["sessions"])
 
@@ -37,6 +40,7 @@ async def get_session_history(
     """
     session = await session_service.get_session(session_id)
     if not session:
+        log.warning("session_not_found", session_id=str(session_id))
         raise HTTPException(status_code=404, detail="Session not found")
         
     messages = await session_service.get_full_history(session_id)

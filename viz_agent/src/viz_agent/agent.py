@@ -2,6 +2,7 @@
 
 import time
 import json
+from typing import List, Optional
 import pandas as pd
 from .models import (
     VizAgentInput,
@@ -143,6 +144,7 @@ class VizAgent:
         plotly_code: str,
         dataframe: pd.DataFrame,
         user_prompt: str,
+        conversation_history: Optional[List] = None,
     ) -> VizAgentOutput:
         """
         Modifica un gráfico existente según instrucciones del usuario.
@@ -155,6 +157,7 @@ class VizAgent:
             plotly_code: Código Python Plotly del gráfico actual.
             dataframe: DataFrame obtenido re-ejecutando el SQL guardado en BD.
             user_prompt: Instrucción del usuario para modificar el gráfico.
+            conversation_history: Historial de conversación para contexto adicional.
         """
         start_time = time.time()
 
@@ -170,6 +173,7 @@ class VizAgent:
                 plotly_code=plotly_code,
                 user_prompt=user_prompt,
                 df_metadata=df_metadata,
+                conversation_history=conversation_history,
             )
             self.logger.log_code_generated(f"[MODIFY]\n{modified_code}")
 

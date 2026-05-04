@@ -32,7 +32,7 @@ class SessionService:
         role: MessageRole,
         content: str,
         response_type: ResponseType | None = None,
-        result_id: uuid.UUID | None = None
+        chart_id: uuid.UUID | None = None
     ) -> ConversationMessage:
         await self.get_or_create_session(session_id)
         msg = ConversationMessage(
@@ -40,7 +40,7 @@ class SessionService:
             role=role.value,
             content=content,
             response_type=response_type.value if response_type else None,
-            result_id=result_id
+            chart_id=chart_id
         )
         self.db.add(msg)
         await self.db.commit()
@@ -69,11 +69,11 @@ class SessionService:
         return context
 
     async def get_full_history(self, session_id: uuid.UUID) -> list[MessageItem]:
-        from api.models.database import GenerationResult
+        from api.models.database import Chart
         
         stmt = (
-            select(ConversationMessage, GenerationResult.viz_json)
-            .outerjoin(GenerationResult, ConversationMessage.result_id == GenerationResult.id)
+            select(ConversationMessage, Chart.viz_json)
+            .outerjoin(Chart, ConversationMessage.chart_id == Chart.id)
             .where(ConversationMessage.session_id == session_id)
             .order_by(ConversationMessage.created_at.asc())
         )
@@ -87,7 +87,7 @@ class SessionService:
                 content=msg.content,
                 response_type=ResponseType(msg.response_type) if msg.response_type else None,
                 timestamp=msg.created_at,
-                result_id=msg.result_id,
+                chart_id=msg.chart_id,
                 plotly_json=viz_json
             ))
             

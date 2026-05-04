@@ -1,10 +1,10 @@
 """
-routes/results.py — Endpoints para consulta y edición de resultados de visualización.
+routes/charts.py — Endpoints para consulta y edición de gráficos.
 
 Endpoints:
-- GET  /api/v1/results/{result_id}            — Obtener un resultado existente
-- PATCH /api/v1/results/{result_id}/metadata   — TFG-56: Actualizar metadata del gráfico
-- POST  /api/v1/results/{result_id}/regenerate — TFG-57: Regenerar gráfico con prompt
+- GET  /api/v1/charts/{chart_id}            — Obtener un gráfico existente
+- PATCH /api/v1/charts/{chart_id}/metadata   — TFG-56: Actualizar metadata del gráfico
+- POST  /api/v1/charts/{chart_id}/regenerate — TFG-57: Regenerar gráfico con prompt
 """
 
 import asyncio
@@ -16,32 +16,32 @@ from fastapi import APIRouter, Depends, HTTPException
 from api.models.schemas import (
     RegenerateChartRequest,
     RegenerateChartResponse,
-    ResultResponse,
+    ChartResponse,
     UpdateMetadataRequest,
     UpdateMetadataResponse,
 )
 from api.models.error_schemas import ErrorResponse
-from api.dependencies import get_pipeline_service, get_result_service, get_session_service, get_settings
+from api.dependencies import get_pipeline_service, get_chart_service, get_session_service, get_settings
 from decision_agent.models import MessageRole, ResponseType
 
-log = structlog.get_logger("api.routes.results")
+log = structlog.get_logger("api.routes.charts")
 
-router = APIRouter(prefix="/api/v1", tags=["results"])
+router = APIRouter(prefix="/api/v1", tags=["charts"])
 
 @router.get(
-    "/results",
-    response_model=list[ResultResponse],
+    "/charts",
+    response_model=list[ChartResponse],
 )
-async def get_all_results(
-    result_service: Any = Depends(get_result_service),
+async def get_all_charts(
+    chart_service: Any = Depends(get_chart_service),
 ):
     """
-    Retrieve all saved visualization results across all projects.
+    Retrieve all saved visualization charts across all projects.
     """
-    results = await result_service.get_all_results()
+    charts = await chart_service.get_all_charts()
     return [
-        ResultResponse(
-            result_id=r.id,
+        ChartResponse(
+            chart_id=r.id,
             query=r.query,
             sql=r.sql,
             plotly_json=r.viz_json,
@@ -49,50 +49,50 @@ async def get_all_results(
             chart_type=r.chart_type,
             project_id=r.project_id,
             created_at=r.created_at
-        ) for r in results
+        ) for r in charts
     ]
 
 
 @router.get(
-    "/results/{result_id}", 
-    response_model=ResultResponse,
-    responses={404: {"model": ErrorResponse, "description": "Resultado no encontrado"}}
+    "/charts/{chart_id}", 
+    response_model=ChartResponse,
+    responses={404: {"model": ErrorResponse, "description": "Gráfico no encontrado"}}
 )
-async def get_result(
-    result_id: uuid.UUID,
-    result_service: Any = Depends(get_result_service),
+async def get_chart(
+    chart_id: uuid.UUID,
+    chart_service: Any = Depends(get_chart_service),
 ):
     """
-    Retrieve a saved visualization result.
+    Retrieve a saved visualization chart.
     """
-    result = await result_service.get_result_by_id(result_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Result not found")
+    chart = await chart_service.get_chart_by_id(chart_id)
+    if not chart:
+        raise HTTPException(status_code=404, detail="Chart not found")
         
-    return ResultResponse(
-        result_id=result.id,
-        query=result.query,
-        sql=result.sql,
-        plotly_json=result.viz_json,
-        plotly_code=result.plotly_code,
-        chart_type=result.chart_type,
-        project_id=result.project_id,
-        created_at=result.created_at
+    return ChartResponse(
+        chart_id=chart.id,
+        query=chart.query,
+        sql=chart.sql,
+        plotly_json=chart.viz_json,
+        plotly_code=chart.plotly_code,
+        chart_type=chart.chart_type,
+        project_id=chart.project_id,
+        created_at=chart.created_at
     )
 
 
 @router.patch(
-    "/results/{result_id}/metadata", 
+    "/charts/{chart_id}/metadata", 
     response_model=UpdateMetadataResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Resultado no encontrado"},
+        404: {"model": ErrorResponse, "description": "Gráfico no encontrado"},
         422: {"description": "Error de validación de campos"}
     }
 )
 async def update_chart_metadata(
-    result_id: uuid.UUID,
+    chart_id: uuid.UUID,
     request: UpdateMetadataRequest,
-    result_service: Any = Depends(get_result_service),
+    chart_service: Any = Depends(get_chart_service),
 ):
     """
     Actualizar metadata del gráfico (título, ejes).
@@ -108,37 +108,37 @@ async def update_chart_metadata(
         )
 
     try:
-        result, updated_fields = await result_service.update_metadata(
-            result_id=result_id,
+        chart, updated_fields = await chart_service.update_metadata(
+            chart_id=chart_id,
             title=request.title,
             xaxis_title=request.xaxis_title,
             yaxis_title=request.yaxis_title,
             extra_layout=request.extra_layout,
         )
     except ValueError:
-        log.warning("result_not_found", result_id=str(result_id))
-        raise HTTPException(status_code=404, detail="Result not found")
+        log.warning("chart_not_found", chart_id=str(chart_id))
+        raise HTTPException(status_code=404, detail="Chart not found")
 
     return UpdateMetadataResponse(
-        result_id=result.id,
+        chart_id=chart.id,
         updated_fields=updated_fields,
-        plotly_json=result.viz_json,
+        plotly_json=chart.viz_json,
     )
 
 
 @router.post(
-    "/results/{result_id}/regenerate", 
+    "/charts/{chart_id}/regenerate", 
     response_model=RegenerateChartResponse,
     responses={
-        404: {"model": ErrorResponse, "description": "Resultado no encontrado"},
-        422: {"description": "Este resultado no tiene código Python o entrada inválida"},
+        404: {"model": ErrorResponse, "description": "Gráfico no encontrado"},
+        422: {"description": "Este gráfico no tiene código Python o entrada inválida"},
         500: {"model": ErrorResponse, "description": "Error al re-ejecutar SQL o en VizAgent"},
     }
 )
 async def regenerate_chart(
-    result_id: uuid.UUID,
+    chart_id: uuid.UUID,
     request: RegenerateChartRequest,
-    result_service: Any = Depends(get_result_service),
+    chart_service: Any = Depends(get_chart_service),
     pipeline_service: Any = Depends(get_pipeline_service),
     session_service: Any = Depends(get_session_service),
 ):
@@ -151,20 +151,20 @@ async def regenerate_chart(
     session_id = request.session_id
     log.info(
         "chart_regeneration_started",
-        result_id=str(result_id),
+        chart_id=str(chart_id),
         session_id=str(session_id) if session_id else None,
         prompt_len=len(request.prompt),
     )
-    # 1. Obtener el resultado existente
-    result = await result_service.get_result_by_id(result_id)
-    if not result:
-        raise HTTPException(status_code=404, detail="Result not found")
+    # 1. Obtener el gráfico existente
+    chart = await chart_service.get_chart_by_id(chart_id)
+    if not chart:
+        raise HTTPException(status_code=404, detail="Chart not found")
 
-    # 2. Verificar que el resultado tiene plotly_code
-    if not result.plotly_code:
+    # 2. Verificar que el gráfico tiene plotly_code
+    if not chart.plotly_code:
         raise HTTPException(
             status_code=422,
-            detail="Este resultado no tiene código Python asociado y no puede ser regenerado.",
+            detail="Este gráfico no tiene código Python asociado y no puede ser regenerado.",
         )
 
     # 3. Recuperar historial de conversación (context window) si hay sesión
@@ -181,17 +181,17 @@ async def regenerate_chart(
     #    bloquear el event loop de uvloop.
     vanna_agent = pipeline_service.decision_agent.text2sql_agent
     try:
-        dataframe = await asyncio.to_thread(vanna_agent.execute_sql, result.sql)
+        dataframe = await asyncio.to_thread(vanna_agent.execute_sql, chart.sql)
     except Exception as exc:
         log.error(
             "chart_regeneration_sql_failed",
-            result_id=str(result_id),
-            sql=result.sql,
+            chart_id=str(chart_id),
+            sql=chart.sql,
             error=str(exc),
         )
         raise HTTPException(
             status_code=500,
-            detail="Error al re-ejecutar la consulta SQL del resultado.",
+            detail="Error al re-ejecutar la consulta SQL del gráfico.",
         )
 
     # 5. Guardar el mensaje del USUARIO antes de invocar la IA
@@ -206,11 +206,11 @@ async def regenerate_chart(
             log.error("failed_to_save_user_message_regenerate", error=str(exc), session_id=str(session_id))
 
     # 6. Invocar VizAgent.modify_chart (también síncrono/bloqueante)
-    log.info("viz_agent_modify_started", result_id=str(result_id))
+    log.info("viz_agent_modify_started", chart_id=str(chart_id))
     viz_agent = pipeline_service.decision_agent.viz_agent
     modification_output = await asyncio.to_thread(
         viz_agent.modify_chart,
-        result.plotly_code,
+        chart.plotly_code,
         dataframe,
         request.prompt,
         conversation_history,
@@ -219,7 +219,7 @@ async def regenerate_chart(
     if not modification_output.success:
         log.error(
             "chart_regeneration_failed",
-            result_id=str(result_id),
+            chart_id=str(chart_id),
             error=modification_output.error_message,
         )
         raise HTTPException(
@@ -227,16 +227,16 @@ async def regenerate_chart(
             detail=f"Error al regenerar gráfico: {modification_output.error_message}",
         )
 
-    # 7. Actualizar el resultado en la BD (plotly_json y plotly_code sincronizados)
+    # 7. Actualizar el gráfico en la BD (plotly_json y plotly_code sincronizados)
     try:
-        updated_result = await result_service.update_viz_json(
-            result_id=result_id,
+        updated_chart = await chart_service.update_viz_json(
+            chart_id=chart_id,
             viz_json=modification_output.plotly_json,
             plotly_code=modification_output.plotly_code,
             chart_type=modification_output.chart_type,
         )
     except ValueError:
-        raise HTTPException(status_code=404, detail="Result not found")
+        raise HTTPException(status_code=404, detail="Chart not found")
 
     # 8. Guardar el mensaje del SISTEMA con la descripción generada por Gemini
     if session_id:
@@ -251,20 +251,20 @@ async def regenerate_chart(
                 role=MessageRole.SYSTEM,
                 content=changes_description or "(Gráfico modificado sin descripción)",
                 response_type=ResponseType.VISUALIZATION,
-                result_id=updated_result.id,
+                chart_id=updated_chart.id,
             )
         except Exception as exc:
             log.error("failed_to_save_system_message_regenerate", error=str(exc), session_id=str(session_id))
 
     log.info(
         "chart_regeneration_completed",
-        result_id=str(updated_result.id),
+        chart_id=str(updated_chart.id),
         session_id=str(session_id) if session_id else None,
     )
     return RegenerateChartResponse(
-        result_id=updated_result.id,
-        plotly_json=updated_result.viz_json,
-        plotly_code=updated_result.plotly_code,
-        chart_type=updated_result.chart_type,
+        chart_id=updated_chart.id,
+        plotly_json=updated_chart.viz_json,
+        plotly_code=updated_chart.plotly_code,
+        chart_type=updated_chart.chart_type,
     )
 

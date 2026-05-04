@@ -4,8 +4,8 @@ from typing import Sequence
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
-from api.models.database import Project, GenerationResult
-from api.models.schemas import ProjectCreate, ProjectResponse, ResultResponse
+from api.models.database import Project, Chart
+from api.models.schemas import ProjectCreate, ProjectResponse, ChartResponse
 
 log = structlog.get_logger("api.project_service")
 
@@ -62,51 +62,51 @@ class ProjectService:
         await self.db.commit()
         return True
 
-    async def add_result_to_project(self, project_id: uuid.UUID, result_id: uuid.UUID) -> bool:
+    async def add_chart_to_project(self, project_id: uuid.UUID, chart_id: uuid.UUID) -> bool:
         # Check if project exists
         project = await self.get_project(project_id)
         if not project:
             return False
             
-        # Get result
-        stmt = select(GenerationResult).where(GenerationResult.id == result_id)
+        # Get chart
+        stmt = select(Chart).where(Chart.id == chart_id)
         res = await self.db.execute(stmt)
-        generation_result = res.scalars().first()
+        chart = res.scalars().first()
         
-        if not generation_result:
+        if not chart:
             return False
             
-        generation_result.project_id = project_id
+        chart.project_id = project_id
         await self.db.commit()
         return True
 
-    async def remove_result_from_project(self, project_id: uuid.UUID, result_id: uuid.UUID) -> bool:
-        stmt = select(GenerationResult).where(
-            GenerationResult.id == result_id,
-            GenerationResult.project_id == project_id
+    async def remove_chart_from_project(self, project_id: uuid.UUID, chart_id: uuid.UUID) -> bool:
+        stmt = select(Chart).where(
+            Chart.id == chart_id,
+            Chart.project_id == project_id
         )
         res = await self.db.execute(stmt)
-        generation_result = res.scalars().first()
+        chart = res.scalars().first()
         
-        if not generation_result:
+        if not chart:
             return False
             
-        generation_result.project_id = None
+        chart.project_id = None
         await self.db.commit()
         return True
 
-    async def get_project_results(self, project_id: uuid.UUID) -> list[ResultResponse]:
+    async def get_project_charts(self, project_id: uuid.UUID) -> list[ChartResponse]:
         project = await self.get_project(project_id)
         if not project:
             return []
             
-        stmt = select(GenerationResult).where(GenerationResult.project_id == project_id).order_by(GenerationResult.created_at.desc())
+        stmt = select(Chart).where(Chart.project_id == project_id).order_by(Chart.created_at.desc())
         res = await self.db.execute(stmt)
-        results = res.scalars().all()
+        charts = res.scalars().all()
         
         return [
-            ResultResponse(
-                result_id=r.id,
+            ChartResponse(
+                chart_id=r.id,
                 query=r.query,
                 sql=r.sql,
                 plotly_json=r.viz_json,
@@ -114,5 +114,5 @@ class ProjectService:
                 chart_type=r.chart_type,
                 project_id=r.project_id,
                 created_at=r.created_at
-            ) for r in results
+            ) for r in charts
         ]

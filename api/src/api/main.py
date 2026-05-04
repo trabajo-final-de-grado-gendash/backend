@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.config import Settings
 from api.db.engine import dispose_engine, get_engine
-from api.routes import health, generate, sessions, results
+from api.routes import health, generate, sessions, charts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

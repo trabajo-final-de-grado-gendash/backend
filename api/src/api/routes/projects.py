@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from api.models.schemas import (
@@ -11,6 +12,8 @@ from api.models.schemas import (
 )
 from api.models.error_schemas import ErrorResponse
 from api.dependencies import get_project_service
+
+log = structlog.get_logger("api.routes.projects")
 
 router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
 
@@ -53,6 +56,7 @@ async def delete_project(
     """Elimina un proyecto."""
     success = await project_service.delete_project(project_id)
     if not success:
+        log.warning("project_not_found", project_id=str(project_id))
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
 
 
@@ -69,6 +73,7 @@ async def get_project_charts(
     # Verificamos si existe
     project = await project_service.get_project(project_id)
     if not project:
+        log.warning("project_not_found", project_id=str(project_id))
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
         
     return await project_service.get_project_results(project_id)
@@ -87,6 +92,7 @@ async def add_chart_to_project(
     """Asocia un gráfico a un proyecto."""
     success = await project_service.add_result_to_project(project_id, result_id)
     if not success:
+        log.warning("add_chart_to_project_failed", project_id=str(project_id), result_id=str(result_id))
         raise HTTPException(status_code=404, detail="Proyecto o resultado no encontrado")
     return {"status": "success"}
 
@@ -104,4 +110,5 @@ async def remove_chart_from_project(
     """Desasocia un gráfico de un proyecto."""
     success = await project_service.remove_result_from_project(project_id, result_id)
     if not success:
+        log.warning("remove_chart_from_project_failed", project_id=str(project_id), result_id=str(result_id))
         raise HTTPException(status_code=404, detail="Gráfico no encontrado en el proyecto")

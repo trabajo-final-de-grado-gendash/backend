@@ -22,6 +22,10 @@ MODIFICATION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Yo
 - Complete unique values for categorical columns (if <= 50 values):
 {unique_values}
 
+## Conversation History (last messages for context)
+
+{conversation_history}
+
 ## User Instruction
 
 {user_prompt}
@@ -39,6 +43,7 @@ MODIFICATION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Yo
 9. Do not include `fig.show()` or `fig.write_html()` at the end.
 10. Ensure the returned code is complete and executable without any additional imports beyond those already in the original.
 11. **CRITICAL**: Return only the raw Python code. No markdown, no explanations, no code fences.
+12. Use the Conversation History section to resolve ambiguous references in the user's instruction (e.g., "the same color I mentioned before"). If there is no relevant prior context, ignore that section.
 
 Generate a response following the provided JSON schema.
 """

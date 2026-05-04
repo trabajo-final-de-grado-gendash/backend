@@ -90,19 +90,25 @@ class DecisionAgent:
             self.log.warning("viz_agent_not_found_standalone")
 
     def run(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
-        """Entry point orquestador principal con timeout < 15s."""
+        """Entry point orquestador principal con timeout de 30s."""
+
         import concurrent.futures
-        
+
+        t_start = time.perf_counter()
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._run_internal, input_data)
             try:
-                return future.result(timeout=30.5)
+                return future.result(timeout=30)
+
             except concurrent.futures.TimeoutError as exc:
-                self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=14500)
+                elapsed = int((time.perf_counter() - t_start) * 1000)
+                self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=elapsed)
                 raise PipelineError(
-                    message="El pipeline excedió el límite de tiempo de 15 segundos (timeout).",
+                    message="El pipeline excedió el límite de tiempo de 30 segundos (timeout).",
+
                     stage="timeout"
                 ) from exc
+
 
     def _run_internal(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
         """Lógica original de orquestación."""
@@ -161,8 +167,19 @@ class DecisionAgent:
             # --- RUTA PRINCIPAL (VALID_AND_CLEAR) ---
             if not self.text2sql_agent or not self.viz_agent:
                 raise PipelineError("Faltan agentes inyectados en runtime para ejecución del pipeline.")
-            
-            return self._execute_data_pipeline(query, metadata)
+
+            # Si Gemini resolvió una query auto-contenida desde el contexto, usarla.
+            # De lo contrario, usar la query original del usuario.
+            effective_query = intent.resolved_query or query
+            if intent.resolved_query:
+                self.log.info(
+                    "query_resolved_from_context",
+                    original=query,
+                    resolved=intent.resolved_query,
+                )
+
+            return self._execute_data_pipeline(effective_query, metadata)
+
 
         except Exception as e:
             elapsed = time.perf_counter() - t0

@@ -34,7 +34,25 @@ Debes analizar la consulta y devolver EXACTAMENTE UNA de las siguientes cuatro c
 [HISTORIAL DE LA CONVERSACIÓN]
 {conversation_history}
 
+[CAMPO resolved_query]
+Este campo SOLO debe rellenarse cuando category = valid_and_clear Y la consulta del usuario NO es auto-contenida
+(es decir, depende del historial para entenderse correctamente).
+El valor debe ser una consulta completa en lenguaje natural que pueda convertirse a SQL sin necesitar ningún contexto adicional.
+
+Ejemplos de cuándo rellenar resolved_query:
+  - El usuario respondió "por país" tras una pregunta de clarificación sobre "ventas por región"
+    → resolved_query = "Mostrar ventas por región agrupadas por país"
+  - El usuario dijo "lo mismo pero ordenado de mayor a menor" referenciando una consulta anterior
+    → resolved_query = "[consulta anterior completa] ordenada de mayor a menor"
+  - El usuario dijo "ahora por mes" después de ver un gráfico de ventas por año
+    → resolved_query = "Ventas totales agrupadas por mes"
+
+Ejemplos de cuándo dejar resolved_query en null:
+  - El usuario dijo "muéstrame las 5 canciones más vendidas" (query standalone, no necesita contexto)
+  - El usuario hizo una consulta completamente nueva sin referencias al historial
+
 IMPORTANTE:
 - Responde UNICA y EXCLUSIVAMENTE con un JSON estructurado de acuerdo al esquema solicitado.
 - No incluyas explicaciones formales ni markdown fuera del JSON estructurado, este JSON se consumirá vía código.
 """
+

@@ -160,6 +160,11 @@ class RegenerateChartRequest(BaseModel):
         max_length=2000,
         description="Instrucción en lenguaje natural para modificar el gráfico",
     )
+    session_id: Optional[uuid.UUID] = Field(
+        None,
+        description="ID de sesión para persistir la interacción en el historial y recuperar contexto.",
+    )
+
 
 
 class RegenerateChartResponse(BaseModel):

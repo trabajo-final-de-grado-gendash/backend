@@ -1,10 +1,14 @@
+import time
+
+import structlog
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-import time
 
 from api.models.schemas import HealthResponse, ComponentHealth
 from api.dependencies import get_db_session
+
+log = structlog.get_logger("api.routes.health")
 
 router = APIRouter(prefix="/api/v1", tags=["health"])
 
@@ -21,8 +25,8 @@ async def health_check(session: AsyncSession = Depends(get_db_session)):
     try:
         await session.execute(text("SELECT 1"))
         db_status = "up"
-    except Exception:
-        pass
+    except Exception as exc:
+        log.warning("health_check_db_failed", error=str(exc))
     db_latency = (time.time() - start_time) * 1000
     components["database"] = ComponentHealth(status=db_status, latency_ms=db_latency)
     

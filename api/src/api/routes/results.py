@@ -21,7 +21,8 @@ from api.models.schemas import (
     UpdateMetadataResponse,
 )
 from api.models.error_schemas import ErrorResponse
-from api.dependencies import get_pipeline_service, get_result_service
+from api.dependencies import get_pipeline_service, get_result_service, get_session_service, get_settings
+from decision_agent.models import MessageRole, ResponseType
 
 log = structlog.get_logger("api.routes.results")
 
@@ -115,6 +116,7 @@ async def update_chart_metadata(
             extra_layout=request.extra_layout,
         )
     except ValueError:
+        log.warning("result_not_found", result_id=str(result_id))
         raise HTTPException(status_code=404, detail="Result not found")
 
     return UpdateMetadataResponse(
@@ -138,6 +140,7 @@ async def regenerate_chart(
     request: RegenerateChartRequest,
     result_service: Any = Depends(get_result_service),
     pipeline_service: Any = Depends(get_pipeline_service),
+    session_service: Any = Depends(get_session_service),
 ):
     """
     Regenerar gráfico con un prompt del usuario.
@@ -145,6 +148,13 @@ async def regenerate_chart(
     Toma el viz_json actual del gráfico, lo envía a Gemini junto con el prompt
     del usuario, y actualiza el resultado con el JSON modificado.
     """
+    session_id = request.session_id
+    log.info(
+        "chart_regeneration_started",
+        result_id=str(result_id),
+        session_id=str(session_id) if session_id else None,
+        prompt_len=len(request.prompt),
+    )
     # 1. Obtener el resultado existente
     result = await result_service.get_result_by_id(result_id)
     if not result:
@@ -157,7 +167,16 @@ async def regenerate_chart(
             detail="Este resultado no tiene código Python asociado y no puede ser regenerado.",
         )
 
-    # 3. Re-ejecutar el SQL guardado para obtener el DataFrame real
+    # 3. Recuperar historial de conversación (context window) si hay sesión
+    conversation_history = []
+    settings = get_settings()
+    if session_id:
+        try:
+            conversation_history = await session_service.get_context_window(session_id, limit=settings.CONTEXT_WINDOW_SIZE)
+        except Exception as exc:
+            log.warning("failed_to_fetch_conversation_history", error=str(exc), session_id=str(session_id))
+
+    # 4. Re-ejecutar el SQL guardado para obtener el DataFrame real
     #    execute_sql es síncrona/bloqueante — se corre en thread pool para no
     #    bloquear el event loop de uvloop.
     vanna_agent = pipeline_service.decision_agent.text2sql_agent
@@ -175,13 +194,26 @@ async def regenerate_chart(
             detail="Error al re-ejecutar la consulta SQL del resultado.",
         )
 
-    # 4. Invocar VizAgent.modify_chart (también síncrono/bloqueante)
+    # 5. Guardar el mensaje del USUARIO antes de invocar la IA
+    if session_id:
+        try:
+            await session_service.save_message(
+                session_id=session_id,
+                role=MessageRole.USER,
+                content=request.prompt,
+            )
+        except Exception as exc:
+            log.error("failed_to_save_user_message_regenerate", error=str(exc), session_id=str(session_id))
+
+    # 6. Invocar VizAgent.modify_chart (también síncrono/bloqueante)
+    log.info("viz_agent_modify_started", result_id=str(result_id))
     viz_agent = pipeline_service.decision_agent.viz_agent
     modification_output = await asyncio.to_thread(
         viz_agent.modify_chart,
         result.plotly_code,
         dataframe,
         request.prompt,
+        conversation_history,
     )
 
     if not modification_output.success:
@@ -195,7 +227,7 @@ async def regenerate_chart(
             detail=f"Error al regenerar gráfico: {modification_output.error_message}",
         )
 
-    # 5. Actualizar el resultado en la BD (plotly_json y plotly_code sincronizados)
+    # 7. Actualizar el resultado en la BD (plotly_json y plotly_code sincronizados)
     try:
         updated_result = await result_service.update_viz_json(
             result_id=result_id,
@@ -206,6 +238,29 @@ async def regenerate_chart(
     except ValueError:
         raise HTTPException(status_code=404, detail="Result not found")
 
+    # 8. Guardar el mensaje del SISTEMA con la descripción generada por Gemini
+    if session_id:
+        try:
+            changes_description = (
+                modification_output.metadata.get("changes_description")
+                if modification_output.metadata
+                else None
+            )
+            await session_service.save_message(
+                session_id=session_id,
+                role=MessageRole.SYSTEM,
+                content=changes_description or "(Gráfico modificado sin descripción)",
+                response_type=ResponseType.VISUALIZATION,
+                result_id=updated_result.id,
+            )
+        except Exception as exc:
+            log.error("failed_to_save_system_message_regenerate", error=str(exc), session_id=str(session_id))
+
+    log.info(
+        "chart_regeneration_completed",
+        result_id=str(updated_result.id),
+        session_id=str(session_id) if session_id else None,
+    )
     return RegenerateChartResponse(
         result_id=updated_result.id,
         plotly_json=updated_result.viz_json,

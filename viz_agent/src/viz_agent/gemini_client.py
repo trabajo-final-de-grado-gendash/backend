@@ -2,7 +2,7 @@
 
 from google import genai
 from google.genai import types
-from typing import List
+from typing import List, Optional
 from .models import (
     DataFrameMetadata,
     GeminiResponse,
@@ -130,6 +130,7 @@ class GeminiClient:
         plotly_code: str,
         user_prompt: str,
         df_metadata: "DataFrameMetadata",
+        conversation_history: Optional[List] = None,
     ) -> tuple[str, str]:
         """
         Modifica el código Python Plotly de un gráfico según instrucciones del usuario.
@@ -137,9 +138,22 @@ class GeminiClient:
         Envía el código actual + metadata del DataFrame + prompt a Gemini y
         recibe el código modificado.
 
+        Args:
+            conversation_history: Lista de ConversationContext con el historial
+                                  de la sesión (últimos N mensajes).
+
         Returns:
             Tupla (modified_code, changes_description)
         """
+        # Serializar historial a texto legible para el prompt
+        history_text = "(No prior conversation context)"
+        if conversation_history:
+            lines = []
+            for msg in conversation_history:
+                role_label = msg.role.value.upper() if hasattr(msg.role, "value") else str(msg.role).upper()
+                lines.append(f"{role_label}: {msg.content}")
+            history_text = "\n".join(lines)
+
         prompt = MODIFICATION_PROMPT_TEMPLATE.format(
             plotly_code=plotly_code,
             user_prompt=user_prompt,
@@ -151,6 +165,7 @@ class GeminiClient:
             sample_values=json.dumps(df_metadata.sample_values, indent=2),
             unique_counts=json.dumps(df_metadata.unique_counts, indent=2),
             unique_values=json.dumps(df_metadata.unique_values, indent=2),
+            conversation_history=history_text,
         )
 
         schema = ChartModificationResponse.model_json_schema()

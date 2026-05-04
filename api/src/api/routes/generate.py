@@ -1,6 +1,7 @@
 import uuid
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, Depends, HTTPException
 
 from api.models.schemas import (
@@ -9,8 +10,10 @@ from api.models.schemas import (
     ResponseType,
 )
 from api.models.error_schemas import ErrorResponse
-from api.dependencies import get_pipeline_service, get_result_service, get_session_service
+from api.dependencies import get_pipeline_service, get_result_service, get_session_service, get_settings
 from decision_agent.models import MessageRole
+
+log = structlog.get_logger("api.routes.generate")
 
 router = APIRouter(prefix="/api/v1", tags=["generate"])
 
@@ -33,9 +36,11 @@ async def generate_visualization(
     Orchestrate the pipeline and return visualization.
     """
     session_id = request.session_id or uuid.uuid4()
-    
+    log.info("generate_request_started", session_id=str(session_id), query_len=len(request.query))
+
     # Obtener ventana de contexto
-    history = await session_service.get_context_window(session_id, limit=5)
+    settings = get_settings()
+    history = await session_service.get_context_window(session_id, limit=settings.CONTEXT_WINDOW_SIZE)
     
     # Llamar al pipeline orquestador
     output = pipeline_service.run(
@@ -52,8 +57,6 @@ async def generate_visualization(
             content=request.query
         )
     except Exception as e:
-        import structlog
-        log = structlog.get_logger("api.routes.generate")
         log.error("failed_to_save_user_message", error=str(e), session_id=str(session_id))
     
     # Parse output and convert to API model GenerateResponse
@@ -91,8 +94,6 @@ async def generate_visualization(
             )
             result_id = persisted_result.id
         except Exception as e:
-            import structlog
-            log = structlog.get_logger("api.routes.generate")
             log.error("failed_to_save_result", error=str(e), session_id=str(session_id))
 
     # Save SYSTEM message, now with result_id if available
@@ -106,10 +107,14 @@ async def generate_visualization(
             result_id=result_id
         )
     except Exception as e:
-        import structlog
-        log = structlog.get_logger("api.routes.generate")
         log.error("failed_to_save_system_message", error=str(e), session_id=str(session_id))
-    
+
+    log.info(
+        "generate_request_completed",
+        session_id=str(session_id),
+        response_type=output.response_type.value,
+        result_id=str(result_id) if result_id else None,
+    )
     return GenerateResponse(
         response_type=output.response_type.value,
         session_id=session_id,

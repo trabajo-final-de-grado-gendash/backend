@@ -58,6 +58,16 @@ class IntentClassification(BaseModel):
     reasoning: str
     clarification_question: Optional[str] = None
     suggested_interpretations: list[str] = Field(default_factory=list)
+    resolved_query: Optional[str] = Field(
+        default=None,
+        description=(
+            "Query reformulada y auto-contenida para usar en lugar de la original. "
+            "Solo se rellena cuando category=valid_and_clear y la query del usuario "
+            "depende de mensajes anteriores para ser interpretada correctamente. "
+            "Si la query original ya es auto-contenida, este campo es None."
+        ),
+    )
+
 
 
 class DecisionAgentOutput(BaseModel):

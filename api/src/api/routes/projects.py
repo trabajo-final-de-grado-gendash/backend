@@ -8,7 +8,7 @@ from api.models.schemas import (
     ProjectCreate,
     ProjectResponse,
     ProjectListResponse,
-    ResultResponse,
+    ChartResponse,
 )
 from api.models.error_schemas import ErrorResponse
 from api.dependencies import get_project_service
@@ -62,7 +62,7 @@ async def delete_project(
 
 @router.get(
     "/{project_id}/charts",
-    response_model=list[ResultResponse],
+    response_model=list[ChartResponse],
     responses={404: {"model": ErrorResponse, "description": "Proyecto no encontrado"}},
 )
 async def get_project_charts(
@@ -76,39 +76,39 @@ async def get_project_charts(
         log.warning("project_not_found", project_id=str(project_id))
         raise HTTPException(status_code=404, detail="Proyecto no encontrado")
         
-    return await project_service.get_project_results(project_id)
+    return await project_service.get_project_charts(project_id)
 
 
 @router.post(
-    "/{project_id}/charts/{result_id}",
+    "/{project_id}/charts/{chart_id}",
     status_code=status.HTTP_200_OK,
     responses={404: {"model": ErrorResponse, "description": "Proyecto o resultado no encontrado"}},
 )
 async def add_chart_to_project(
     project_id: uuid.UUID,
-    result_id: uuid.UUID,
+    chart_id: uuid.UUID,
     project_service: Any = Depends(get_project_service),
 ):
     """Asocia un gráfico a un proyecto."""
-    success = await project_service.add_result_to_project(project_id, result_id)
+    success = await project_service.add_chart_to_project(project_id, chart_id)
     if not success:
-        log.warning("add_chart_to_project_failed", project_id=str(project_id), result_id=str(result_id))
+        log.warning("add_chart_to_project_failed", project_id=str(project_id), chart_id=str(chart_id))
         raise HTTPException(status_code=404, detail="Proyecto o resultado no encontrado")
     return {"status": "success"}
 
 
 @router.delete(
-    "/{project_id}/charts/{result_id}",
+    "/{project_id}/charts/{chart_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     responses={404: {"model": ErrorResponse, "description": "Gráfico no encontrado en el proyecto"}},
 )
 async def remove_chart_from_project(
     project_id: uuid.UUID,
-    result_id: uuid.UUID,
+    chart_id: uuid.UUID,
     project_service: Any = Depends(get_project_service),
 ):
     """Desasocia un gráfico de un proyecto."""
-    success = await project_service.remove_result_from_project(project_id, result_id)
+    success = await project_service.remove_chart_from_project(project_id, chart_id)
     if not success:
-        log.warning("remove_chart_from_project_failed", project_id=str(project_id), result_id=str(result_id))
+        log.warning("remove_chart_from_project_failed", project_id=str(project_id), chart_id=str(chart_id))
         raise HTTPException(status_code=404, detail="Gráfico no encontrado en el proyecto")

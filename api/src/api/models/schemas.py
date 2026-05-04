@@ -40,7 +40,7 @@ class GenerateResponse(BaseModel):
 
     response_type: ResponseType
     session_id: uuid.UUID
-    result_id: Optional[uuid.UUID] = None
+    chart_id: Optional[uuid.UUID] = None
     message: Optional[str] = None
     plotly_json: Optional[dict[str, Any]] = None
     sql: Optional[str] = None
@@ -69,7 +69,7 @@ class MessageItem(BaseModel):
     content: str
     response_type: Optional[ResponseType] = None
     timestamp: datetime
-    result_id: Optional[uuid.UUID] = None
+    chart_id: Optional[uuid.UUID] = None
     plotly_json: Optional[dict[str, Any]] = None
 
 
@@ -94,10 +94,10 @@ class SessionListResponse(BaseModel):
     sessions: list[SessionSummary]
 
 
-class ResultResponse(BaseModel):
-    """Response del endpoint GET /api/v1/results/{result_id}."""
+class ChartResponse(BaseModel):
+    """Response del endpoint GET /api/v1/charts/{chart_id}."""
 
-    result_id: uuid.UUID
+    chart_id: uuid.UUID
     query: str
     sql: str
     plotly_json: dict[str, Any]
@@ -129,7 +129,7 @@ class ProjectListResponse(BaseModel):
 
 
 class UpdateMetadataRequest(BaseModel):
-    """Request al endpoint PATCH /api/v1/results/{result_id}/metadata.
+    """Request al endpoint PATCH /api/v1/charts/{chart_id}/metadata.
 
     Campos opcionales de layout Plotly. Se hace merge sobre viz_json.layout.
     """
@@ -146,13 +146,13 @@ class UpdateMetadataRequest(BaseModel):
 class UpdateMetadataResponse(BaseModel):
     """Response tras actualizar metadata del gráfico."""
 
-    result_id: uuid.UUID
+    chart_id: uuid.UUID
     updated_fields: list[str]
     plotly_json: dict[str, Any]
 
 
 class RegenerateChartRequest(BaseModel):
-    """Request al endpoint POST /api/v1/results/{result_id}/regenerate."""
+    """Request al endpoint POST /api/v1/charts/{chart_id}/regenerate."""
 
     prompt: str = Field(
         ...,
@@ -170,7 +170,7 @@ class RegenerateChartRequest(BaseModel):
 class RegenerateChartResponse(BaseModel):
     """Response tras regenerar un gráfico con un prompt."""
 
-    result_id: uuid.UUID
+    chart_id: uuid.UUID
     plotly_json: dict[str, Any]
     plotly_code: Optional[str] = None
     chart_type: Optional[str] = None

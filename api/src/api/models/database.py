@@ -65,8 +65,8 @@ class Session(Base):
         cascade="all, delete-orphan",
         order_by="ConversationMessage.created_at",
     )
-    results: Mapped[list[GenerationResult]] = relationship(
-        "GenerationResult",
+    charts: Mapped[list[Chart]] = relationship(
+        "Chart",
         back_populates="session",
         cascade="all, delete-orphan",
     )
@@ -103,8 +103,8 @@ class Project(Base):
     )
 
     # Relationships
-    results: Mapped[list[GenerationResult]] = relationship(
-        "GenerationResult",
+    charts: Mapped[list[Chart]] = relationship(
+        "Chart",
         back_populates="project",
     )
 
@@ -145,9 +145,9 @@ class ConversationMessage(Base):
         Enum("visualization", "clarification", "message", name="response_type_enum", schema="bigenia"),
         nullable=True,
     )
-    result_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+    chart_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
-        ForeignKey("generation_results.id", ondelete="SET NULL"),
+        ForeignKey("charts.id", ondelete="SET NULL"),
         nullable=True,
     )
     created_at: Mapped[datetime] = mapped_column(
@@ -167,18 +167,18 @@ class ConversationMessage(Base):
         )
 
 
-class GenerationResult(Base):
+class Chart(Base):
     """
     Registro persistido de un pipeline exitoso completo.
 
-    data-model.md §Entity: GenerationResult
+    data-model.md §Entity: Chart
     """
 
-    __tablename__ = "generation_results"
+    __tablename__ = "charts"
 
     __table_args__ = (
-        Index("ix_generation_results_session_id", "session_id"),
-        Index("ix_generation_results_created_at", "created_at"),
+        Index("ix_charts_session_id", "session_id"),
+        Index("ix_charts_created_at", "created_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
@@ -216,11 +216,11 @@ class GenerationResult(Base):
     )
 
     # Relationships
-    session: Mapped[Session] = relationship("Session", back_populates="results")
-    project: Mapped[Optional[Project]] = relationship("Project", back_populates="results")
+    session: Mapped[Session] = relationship("Session", back_populates="charts")
+    project: Mapped[Optional[Project]] = relationship("Project", back_populates="charts")
 
     def __repr__(self) -> str:
         return (
-            f"<GenerationResult id={self.id} session_id={self.session_id} "
+            f"<Chart id={self.id} session_id={self.session_id} "
             f"chart_type={self.chart_type}>"
         )

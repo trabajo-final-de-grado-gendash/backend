@@ -10,7 +10,7 @@ from api.models.schemas import (
     ResponseType,
 )
 from api.models.error_schemas import ErrorResponse
-from api.dependencies import get_pipeline_service, get_result_service, get_session_service, get_settings
+from api.dependencies import get_pipeline_service, get_chart_service, get_session_service, get_settings
 from decision_agent.models import MessageRole
 
 log = structlog.get_logger("api.routes.generate")
@@ -29,7 +29,7 @@ router = APIRouter(prefix="/api/v1", tags=["generate"])
 async def generate_visualization(
     request: GenerateRequest,
     pipeline_service: Any = Depends(get_pipeline_service),
-    result_service: Any = Depends(get_result_service),
+    chart_service: Any = Depends(get_chart_service),
     session_service: Any = Depends(get_session_service),
 ):
     """
@@ -81,10 +81,10 @@ async def generate_visualization(
         elif isinstance(output.viz_result, dict):
             chart_type = output.viz_result.get("chart_type")
 
-    result_id = None
+    chart_id = None
     if output.response_type == ResponseType.VISUALIZATION and plotly_json:
         try:
-            persisted_result = await result_service.save_result(
+            persisted_chart = await chart_service.save_chart(
                 session_id=session_id,
                 query=request.query,
                 sql=output.sql or "",
@@ -92,11 +92,11 @@ async def generate_visualization(
                 plotly_code=plotly_code,
                 chart_type=chart_type
             )
-            result_id = persisted_result.id
+            chart_id = persisted_chart.id
         except Exception as e:
-            log.error("failed_to_save_result", error=str(e), session_id=str(session_id))
+            log.error("failed_to_save_chart", error=str(e), session_id=str(session_id))
 
-    # Save SYSTEM message, now with result_id if available
+    # Save SYSTEM message, now with chart_id if available
     try:
         content_to_save = output.sql if output.response_type == ResponseType.VISUALIZATION else output.message
         await session_service.save_message(
@@ -104,7 +104,7 @@ async def generate_visualization(
             role=MessageRole.SYSTEM,
             content=content_to_save or "(No content)",
             response_type=output.response_type,
-            result_id=result_id
+            chart_id=chart_id
         )
     except Exception as e:
         log.error("failed_to_save_system_message", error=str(e), session_id=str(session_id))
@@ -113,7 +113,7 @@ async def generate_visualization(
         "generate_request_completed",
         session_id=str(session_id),
         response_type=output.response_type.value,
-        result_id=str(result_id) if result_id else None,
+        chart_id=str(chart_id) if chart_id else None,
     )
     return GenerateResponse(
         response_type=output.response_type.value,
@@ -123,5 +123,5 @@ async def generate_visualization(
         sql=output.sql,
         plotly_code=plotly_code,
         chart_type=chart_type,
-        result_id=result_id
+        chart_id=chart_id
     )

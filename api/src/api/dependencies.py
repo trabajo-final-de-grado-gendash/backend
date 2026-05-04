@@ -29,10 +29,10 @@ def get_pipeline_service() -> Any:
     return PipelineService()
 
 
-def get_result_service(db: AsyncSession = Depends(get_db_session)) -> Any:
-    """Provide the result service via dependency injection."""
-    from api.services.result_service import ResultService
-    return ResultService(db)
+def get_chart_service(db: AsyncSession = Depends(get_db_session)) -> Any:
+    """Provide the chart service via dependency injection."""
+    from api.services.chart_service import ChartService
+    return ChartService(db)
 
 def get_session_service(db: AsyncSession = Depends(get_db_session)) -> Any:
     """Provide the session service via dependency injection."""

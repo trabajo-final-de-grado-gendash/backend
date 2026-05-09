@@ -10,7 +10,7 @@ from api.models.schemas import (
     ResponseType,
 )
 from api.models.error_schemas import ErrorResponse
-from api.dependencies import get_pipeline_service, get_chart_service, get_session_service, get_settings
+from api.dependencies import get_pipeline_service, get_chart_service, get_session_service, get_settings, get_vector_service, get_db_session
 from decision_agent.models import MessageRole
 
 log = structlog.get_logger("api.routes.generate")
@@ -31,6 +31,8 @@ async def generate_visualization(
     pipeline_service: Any = Depends(get_pipeline_service),
     chart_service: Any = Depends(get_chart_service),
     session_service: Any = Depends(get_session_service),
+    vector_service: Any = Depends(get_vector_service),
+    db: Any = Depends(get_db_session),
 ):
     """
     Orchestrate the pipeline and return visualization.
@@ -42,12 +44,28 @@ async def generate_visualization(
     settings = get_settings()
     history = await session_service.get_context_window(session_id, limit=settings.CONTEXT_WINDOW_SIZE)
     
+    # 1. Intentar recuperación semántica (Cache con pgvector)
+    cached_query = await vector_service.find_similar_query(db, request.query)
+    cached_sql = cached_query.sql if cached_query else None
+    
+    if cached_sql:
+        log.info("cache_hit_found", session_id=str(session_id), cached_id=str(cached_query.id))
+
     # Llamar al pipeline orquestador
     output = pipeline_service.run(
         query=request.query,
         session_id=session_id,
-        conversation_history=history
+        conversation_history=history,
+        cached_sql=cached_sql
     )
+    
+    # 2. Guardar en cache semántica si fue exitoso y no vino de cache
+    if not cached_sql and output.response_type == ResponseType.VISUALIZATION and output.sql:
+        try:
+            await vector_service.save_query_vector(db, request.query, output.sql)
+            log.info("query_cached", session_id=str(session_id))
+        except Exception as e:
+            log.error("failed_to_cache_query", error=str(e))
     
     # Save the USER conversation message
     try:

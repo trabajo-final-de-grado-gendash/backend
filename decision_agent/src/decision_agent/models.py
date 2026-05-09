@@ -45,6 +45,7 @@ class DecisionAgentInput(BaseModel):
     query: str = Field(..., min_length=1, max_length=2000)
     session_id: Optional[uuid.UUID] = None
     conversation_history: list[ConversationContext] = Field(default_factory=list)
+    cached_sql: Optional[str] = None
 
 
 class IntentClassification(BaseModel):

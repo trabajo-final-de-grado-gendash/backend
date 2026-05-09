@@ -10,6 +10,7 @@ EOSQL
 echo "Creating bigenia schema in chinook database..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "chinook" <<-EOSQL
     CREATE SCHEMA IF NOT EXISTS bigenia;
+    CREATE EXTENSION IF NOT EXISTS vector;
 EOSQL
 
 echo "Loading chinook schema into the chinook database..."

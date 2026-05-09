@@ -39,6 +39,11 @@ def get_engine(settings: Settings | None = None) -> AsyncEngine:
             max_overflow=10,
             pool_pre_ping=True,
             echo=False,
+            connect_args={
+                "server_settings": {
+                    "search_path": "bigenia,public"
+                }
+            },
         )
     return _engine
 

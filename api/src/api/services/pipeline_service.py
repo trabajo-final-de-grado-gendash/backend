@@ -55,7 +55,8 @@ class PipelineService:
         self,
         query: str,
         session_id: uuid.UUID | None = None,
-        conversation_history: list[Any] | None = None
+        conversation_history: list[Any] | None = None,
+        cached_sql: str | None = None
     ) -> DecisionAgentOutput:
         """
         Ejecuta el pipeline orquestando de forma centralizada con el DecisionAgent,
@@ -64,7 +65,8 @@ class PipelineService:
         input_data = DecisionAgentInput(
             query=query,
             session_id=session_id,
-            conversation_history=conversation_history or []
+            conversation_history=conversation_history or [],
+            cached_sql=cached_sql
         )
         
         try:

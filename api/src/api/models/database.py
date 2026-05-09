@@ -22,6 +22,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from pgvector.sqlalchemy import Vector
 
 from api.db.base import Base
 
@@ -224,3 +225,29 @@ class Chart(Base):
             f"<Chart id={self.id} session_id={self.session_id} "
             f"chart_type={self.chart_type}>"
         )
+
+
+class QueryVector(Base):
+    """
+    Persistencia de consultas y sus embeddings para optimización (RAG/Cache).
+    """
+
+    __tablename__ = "query_vectors"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    query: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[Vector] = mapped_column(Vector(768), nullable=False)
+    sql: Mapped[str] = mapped_column(Text, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        server_default=func.now(),
+    )
+
+    def __repr__(self) -> str:
+        return f"<QueryVector id={self.id} query={self.query[:30]}...>"

@@ -43,3 +43,8 @@ def get_project_service(db: AsyncSession = Depends(get_db_session)) -> Any:
     """Provide the project service via dependency injection."""
     from api.services.project_service import ProjectService
     return ProjectService(db)
+
+def get_vector_service() -> Any:
+    """Provide the vector service via dependency injection."""
+    from api.services.vector_service import VectorService
+    return VectorService()

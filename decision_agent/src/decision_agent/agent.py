@@ -121,6 +121,11 @@ class DecisionAgent:
         self.log.info("decision_agent_run_started", query=query)
 
         metadata = {"attempts": 1}
+
+        if input_data.cached_sql:
+            self.log.info("using_cached_sql", sql=input_data.cached_sql)
+            metadata["cached"] = True
+            return self._execute_data_pipeline(query, metadata, sql_override=input_data.cached_sql)
         
         try:
             # 1. Clasificación
@@ -188,19 +193,22 @@ class DecisionAgent:
                 raise
             raise PipelineError(f"DecisionAgent falló con error: {e}") from e
 
-    def _execute_data_pipeline(self, query: str, metadata: dict[str, Any]) -> DecisionAgentOutput:
+    def _execute_data_pipeline(self, query: str, metadata: dict[str, Any], sql_override: str | None = None) -> DecisionAgentOutput:
         """Sub-workflow para queries analíticas válidas: Vanna -> Validator -> DB -> Viz"""
         
         # 1. Text2SQL (Intento inicial)
         t_sql = time.perf_counter()
-        t2s_output = self.text2sql_agent.text_to_sql(query)
-        sql = t2s_output.sql
-        
-        if not t2s_output.success or not sql:
-            # Fallo inicial en generacion
-            self.log.warning("initial_text2sql_failed", error=t2s_output.error)
-            # Podríamos reintentar inmediatamnte con la query sola, pero Vanna no arrojó SQL.
-            raise PipelineError(f"Vanna falló en generación inicial: {t2s_output.error}")
+        if sql_override:
+            sql = sql_override
+        else:
+            t2s_output = self.text2sql_agent.text_to_sql(query)
+            sql = t2s_output.sql
+            
+            if not t2s_output.success or not sql:
+                # Fallo inicial en generacion
+                self.log.warning("initial_text2sql_failed", error=t2s_output.error)
+                # Podríamos reintentar inmediatamnte con la query sola, pero Vanna no arrojó SQL.
+                raise PipelineError(f"Vanna falló en generación inicial: {t2s_output.error}")
 
         # Retrying block (FR-003: 1 reintento con reformulación)
         df_result = None

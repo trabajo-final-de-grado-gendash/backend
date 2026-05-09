@@ -116,37 +116,45 @@
       "id": "75508cce-844c-4abc-b08a-ead935fcd59e"
     },
     {
-      "name": "Results",
+      "name": "Charts",
       "item": [
         {
-          "name": "Get Result by ID",
+          "name": "Get Chart by ID",
           "id": "7182d098-c322-4361-a318-4b2a74251217",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/results/{{result_id}}",
+              "raw": "{{base_url}}/api/v1/charts/{{chart_id}}",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "results",
-                "{{result_id}}"
+                "charts",
+                "{{chart_id}}"
               ]
             }
           },
           "response": []
         },
         {
-          "name": "Get All Results",
+          "name": "Get All Charts",
           "id": "975ea313-3d20-4573-a884-f69a84611642",
           "request": {
             "method": "GET",
             "header": [],
             "url": {
-              "raw": ""
+              "raw": "{{base_url}}/api/v1/charts",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "charts"
+              ]
             }
           },
           "response": []
@@ -167,15 +175,15 @@
               "raw": "{\n  \"title\": \"New Chart Title\",\n  \"xaxis_title\": \"New X Axis\",\n  \"yaxis_title\": \"New Y Axis\",\n  \"extra_layout\": {}\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/results/{{result_id}}/metadata",
+              "raw": "{{base_url}}/api/v1/charts/{{chart_id}}/metadata",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "results",
-                "{{result_id}}",
+                "charts",
+                "{{chart_id}}",
                 "metadata"
               ]
             }
@@ -198,15 +206,15 @@
               "raw": "{\n  \"prompt\": \"Cambialo a un grafico de barras rojo\"\n}"
             },
             "url": {
-              "raw": "{{base_url}}/api/v1/results/{{result_id}}/regenerate",
+              "raw": "{{base_url}}/api/v1/charts/{{chart_id}}/regenerate",
               "host": [
                 "{{base_url}}"
               ],
               "path": [
                 "api",
                 "v1",
-                "results",
-                "{{result_id}}",
+                "charts",
+                "{{chart_id}}",
                 "regenerate"
               ]
             }
@@ -318,7 +326,7 @@
             "method": "POST",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/charts/{{result_id}}",
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/charts/{{chart_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -328,7 +336,7 @@
                 "projects",
                 "{{project_id}}",
                 "charts",
-                "{{result_id}}"
+                "{{chart_id}}"
               ]
             }
           },
@@ -341,7 +349,7 @@
             "method": "DELETE",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/charts/{{result_id}}",
+              "raw": "{{base_url}}/api/v1/projects/{{project_id}}/charts/{{chart_id}}",
               "host": [
                 "{{base_url}}"
               ],
@@ -351,7 +359,7 @@
                 "projects",
                 "{{project_id}}",
                 "charts",
-                "{{result_id}}"
+                "{{chart_id}}"
               ]
             }
           },
@@ -376,7 +384,7 @@
     },
     {
       "id": "22d6add3-3996-408d-90e7-0d1f1671f87a",
-      "key": "result_id",
+      "key": "chart_id",
       "value": "b2c3d4e5-f6a7-8901-2345-6789abcdef01",
       "type": "string"
     },

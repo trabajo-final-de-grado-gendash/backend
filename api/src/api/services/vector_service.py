@@ -80,7 +80,9 @@ class VectorService:
         self, 
         db: AsyncSession, 
         query: str, 
-        sql: str
+        sql: str,
+        cached_response: Optional[dict] = None,
+        response_type: Optional[str] = None
     ) -> QueryVector:
         """ Guarda una nueva consulta y su SQL asociado con su embedding. """
         embedding = await self.get_embedding(query)
@@ -88,10 +90,11 @@ class VectorService:
         new_vector = QueryVector(
             query=query,
             embedding=embedding,
-            sql=sql
+            sql=sql,
+            cached_response=cached_response,
+            response_type=response_type
         )
         
         db.add(new_vector)
         await db.commit()
-        await db.refresh(new_vector)
         return new_vector

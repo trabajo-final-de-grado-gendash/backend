@@ -46,6 +46,33 @@ async def generate_visualization(
     
     # 1. Intentar recuperación semántica (Cache con pgvector)
     cached_query = await vector_service.find_similar_query(db, request.query)
+    
+    if cached_query and cached_query.cached_response:
+        log.info("full_cache_hit", session_id=str(session_id), cached_id=str(cached_query.id))
+        
+        # Save the USER conversation message
+        await session_service.save_message(session_id=session_id, role=MessageRole.USER, content=request.query)
+        
+        # Prepare response from cache
+        cached_data = cached_query.cached_response
+        
+        # Save SYSTEM message to history
+        await session_service.save_message(
+            session_id=session_id, 
+            role=MessageRole.SYSTEM, 
+            content=f"Resultado recuperado de caché: {request.query}",
+            response_type=cached_query.response_type or ResponseType.VISUALIZATION
+        )
+        
+        return GenerateResponse(
+            session_id=session_id,
+            response_type=cached_query.response_type or ResponseType.VISUALIZATION,
+            plotly_json=cached_data.get("plotly_json"),
+            plotly_code=cached_data.get("plotly_code"),
+            sql=cached_query.sql,
+            message=cached_data.get("explanation")
+        )
+
     cached_sql = cached_query.sql if cached_query else None
     
     if cached_sql:
@@ -60,9 +87,25 @@ async def generate_visualization(
     )
     
     # 2. Guardar en cache semántica si fue exitoso y no vino de cache
-    if not cached_sql and output.response_type == ResponseType.VISUALIZATION and output.sql:
+    if not cached_query and output.response_type == ResponseType.VISUALIZATION and output.sql:
         try:
-            await vector_service.save_query_vector(db, request.query, output.sql)
+            # Extraer los datos de visualización para cachear
+            viz_data = {
+                "plotly_json": getattr(output.viz_result, "plotly_json", None) if output.viz_result else None,
+                "plotly_code": getattr(output.viz_result, "plotly_code", None) if output.viz_result else None,
+                "explanation": output.message
+            }
+            if isinstance(output.viz_result, dict):
+                viz_data["plotly_json"] = output.viz_result.get("plotly_json")
+                viz_data["plotly_code"] = output.viz_result.get("plotly_code")
+
+            await vector_service.save_query_vector(
+                db, 
+                request.query, 
+                output.sql, 
+                cached_response=viz_data,
+                response_type=output.response_type
+            )
             log.info("query_cached", session_id=str(session_id))
         except Exception as e:
             log.error("failed_to_cache_query", error=str(e))

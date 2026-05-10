@@ -51,13 +51,54 @@ async def generate_visualization(
     if cached_sql:
         log.info("cache_hit_found", session_id=str(session_id), cached_id=str(cached_query.id))
 
+    # Save the USER conversation message FIRST to ensure session is created
+    try:
+        await session_service.save_message(
+            session_id=session_id, 
+            role=MessageRole.USER, 
+            content=request.query
+        )
+    except Exception as e:
+        log.error("failed_to_save_user_message", error=str(e), session_id=str(session_id))
+
     # Llamar al pipeline orquestador
-    output = pipeline_service.run(
-        query=request.query,
-        session_id=session_id,
-        conversation_history=history,
-        cached_sql=cached_sql
-    )
+    try:
+        output = pipeline_service.run(
+            query=request.query,
+            session_id=session_id,
+            conversation_history=history,
+            cached_sql=cached_sql
+        )
+    except Exception as e:
+        log.error("pipeline_service_failed", error=str(e), session_id=str(session_id))
+        
+        # Generar mensaje de error explícito
+        error_msg = "Hubo un problema al procesar tu consulta. Es posible que el sistema esté sobrecargado o la conexión haya fallado. Por favor, reintenta."
+        
+        e_str = str(e).lower()
+        e_repr = repr(e).lower()
+        if "timeout" in e_str or "timeout" in e_repr:
+            error_msg = "La consulta tardó demasiado tiempo en procesarse. Por favor, intenta hacer una pregunta más específica o reintenta."
+        elif "quota" in e_str or "429" in e_str or "exhausted" in e_str:
+            error_msg = "El servicio de Inteligencia Artificial (Gemini) se ha quedado sin cuota. Por favor, intenta de nuevo más tarde."
+        
+        # Persistir el mensaje de error del SYSTEM
+        try:
+            await session_service.save_message(
+                session_id=session_id,
+                role=MessageRole.SYSTEM,
+                content=error_msg,
+                response_type=ResponseType.ERROR,
+                chart_id=None
+            )
+        except Exception as db_err:
+            log.error("failed_to_save_system_error_message", error=str(db_err), session_id=str(session_id))
+            
+        return GenerateResponse(
+            response_type=ResponseType.ERROR.value,
+            session_id=session_id,
+            message=error_msg
+        )
     
     # 2. Guardar en cache semántica si fue exitoso y no vino de cache
     if not cached_sql and output.response_type == ResponseType.VISUALIZATION and output.sql:
@@ -67,15 +108,7 @@ async def generate_visualization(
         except Exception as e:
             log.error("failed_to_cache_query", error=str(e))
     
-    # Save the USER conversation message
-    try:
-        await session_service.save_message(
-            session_id=session_id, 
-            role=MessageRole.USER, 
-            content=request.query
-        )
-    except Exception as e:
-        log.error("failed_to_save_user_message", error=str(e), session_id=str(session_id))
+    # USER message was saved before the pipeline run
     
     # Parse output and convert to API model GenerateResponse
     plotly_json = None
@@ -114,13 +147,14 @@ async def generate_visualization(
         except Exception as e:
             log.error("failed_to_save_chart", error=str(e), session_id=str(session_id))
 
-    # Save SYSTEM message, now with chart_id if available
+    # Save SYSTEM message (assistant response), now with chart_id if available
     try:
-        content_to_save = output.sql if output.response_type == ResponseType.VISUALIZATION else output.message
+        content_to_save = output.message or "Aquí tienes la visualización generada."
+        log.info("saving_assistant_message", session_id=str(session_id), content_preview=content_to_save[:50])
         await session_service.save_message(
             session_id=session_id,
             role=MessageRole.SYSTEM,
-            content=content_to_save or "(No content)",
+            content=content_to_save,
             response_type=output.response_type,
             chart_id=chart_id
         )

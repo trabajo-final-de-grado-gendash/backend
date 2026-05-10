@@ -143,7 +143,7 @@ class ConversationMessage(Base):
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
     response_type: Mapped[Optional[str]] = mapped_column(
-        Enum("visualization", "clarification", "message", name="response_type_enum", schema="bigenia"),
+        Enum("visualization", "clarification", "message", "error", name="response_type_enum", schema="bigenia"),
         nullable=True,
     )
     chart_id: Mapped[Optional[uuid.UUID]] = mapped_column(

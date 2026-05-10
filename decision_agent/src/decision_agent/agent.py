@@ -98,14 +98,13 @@ class DecisionAgent:
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
             future = executor.submit(self._run_internal, input_data)
             try:
-                return future.result(timeout=30)
+                return future.result(timeout=self.settings.PIPELINE_TIMEOUT_SECONDS)
 
             except concurrent.futures.TimeoutError as exc:
                 elapsed = int((time.perf_counter() - t_start) * 1000)
                 self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=elapsed)
                 raise PipelineError(
-                    message="El pipeline excedió el límite de tiempo de 30 segundos (timeout).",
-
+                    message=f"El pipeline excedió el límite de tiempo de {self.settings.PIPELINE_TIMEOUT_SECONDS} segundos (timeout).",
                     stage="timeout"
                 ) from exc
 
@@ -276,10 +275,17 @@ class DecisionAgent:
             if not viz_output.success:
                 raise PipelineError(f"VizAgent dictaminó fallo en la visualización: {viz_output.error_message}", stage="viz_agent")
                 
+            # Extraer razonamiento o usar texto por defecto
+            reasoning_msg = "Aquí tienes la visualización basada en los datos consultados."
+            if hasattr(viz_output, "metadata") and isinstance(viz_output.metadata, dict):
+                reasoning_msg = viz_output.metadata.get("decision_reasoning") or reasoning_msg
+            elif isinstance(viz_output, dict) and "metadata" in viz_output:
+                reasoning_msg = viz_output["metadata"].get("decision_reasoning") or reasoning_msg
+
             self.log.info("visualization_generated_successfully")
             return DecisionAgentOutput(
                 response_type=ResponseType.VISUALIZATION,
-                message=None,
+                message=reasoning_msg,
                 sql=current_sql,
                 viz_result=viz_output,
                 metadata=metadata,

@@ -13,6 +13,11 @@ from vanna.tools import RunSqlTool
 
 from vanna_agent.config import Settings
 from vanna_agent.models import Text2SQLInput, Text2SQLOutput
+from langsmith import traceable, wrappers
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception
+
+def is_503_error(e: BaseException) -> bool:
+    return "503 unavailable" in str(e).lower() or "503 unavailable" in repr(e).lower()
 
 
 class VannaAgent:
@@ -28,12 +33,18 @@ class VannaAgent:
             model=settings.GEMINI_MODEL,
         )
         
+        # Envolver el cliente interno de Gemini para tener visibilidad de Tokens en LangSmith
+        if hasattr(self.llm, "_client"):
+            self.llm._client = wrappers.wrap_gemini(self.llm._client)
+        
         # Inicializar el runner para ejecutar el SQL en PostgreSQL (Chinook)
         self.sql_runner = PostgresRunner(connection_string=settings.SOURCE_DB_URL)
         
         # Instanciar la herramienta que envuelve la ejecución SQL
         self.run_sql_tool = RunSqlTool(sql_runner=self.sql_runner)
 
+    @traceable(name="VannaAgent.text_to_sql", run_type="chain")
+    @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
     def text_to_sql(self, query: str) -> Text2SQLOutput:
         """
         Traduce una pregunta en lenguaje natural a código SQL
@@ -105,12 +116,15 @@ class VannaAgent:
                 success=True,
             )
         except Exception as e:
+            if is_503_error(e):
+                raise
             return Text2SQLOutput(
                 query=query,
                 success=False,
                 error=str(e)
             )
 
+    @traceable(name="VannaAgent.execute_sql", run_type="tool")
     def execute_sql(self, sql: str) -> pd.DataFrame:
         """
         Ejecuta la sentencia SQL validada sobre Chinook PostgreSQL.

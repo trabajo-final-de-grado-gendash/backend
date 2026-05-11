@@ -30,3 +30,9 @@ class Settings(BaseSettings):
     GEMINI_MODEL: str = "gemini-2.5-flash"
     VIZ_LOG_DIR: str = "logs"
     MAX_CORRECT_ATTEMPTS: int = 5
+
+    # LangSmith observability (opcional)
+    LANGCHAIN_TRACING_V2: str | None = None
+    LANGCHAIN_ENDPOINT: str | None = None
+    LANGCHAIN_API_KEY: str | None = None
+    LANGCHAIN_PROJECT: str | None = None

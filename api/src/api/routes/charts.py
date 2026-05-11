@@ -13,6 +13,7 @@ from typing import Any
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from langsmith import traceable
 from api.models.schemas import (
     RegenerateChartRequest,
     RegenerateChartResponse,
@@ -135,6 +136,7 @@ async def update_chart_metadata(
         500: {"model": ErrorResponse, "description": "Error al re-ejecutar SQL o en VizAgent"},
     }
 )
+@traceable(name="API.regenerate_chart", run_type="chain")
 async def regenerate_chart(
     chart_id: uuid.UUID,
     request: RegenerateChartRequest,
@@ -218,14 +220,18 @@ async def regenerate_chart(
     )
 
     if not modification_output.success:
+        error_msg = modification_output.error_message
+        is_503 = "503 unavailable" in error_msg.lower()
+        status_code = 503 if is_503 else 500
+
         log.error(
             "chart_regeneration_failed",
             chart_id=str(chart_id),
-            error=modification_output.error_message,
+            error=error_msg,
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Error al regenerar gráfico: {modification_output.error_message}",
+            status_code=status_code,
+            detail=error_msg if is_503 else f"Error al regenerar gráfico: {error_msg}",
         )
 
     # 7. Actualizar el gráfico en la BD (plotly_json y plotly_code sincronizados)

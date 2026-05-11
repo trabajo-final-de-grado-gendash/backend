@@ -12,11 +12,16 @@ from __future__ import annotations
 import structlog
 from google import genai
 from google.genai import types
+from langsmith import traceable, wrappers
 
 from decision_agent.exceptions import LLMError
 from decision_agent.logger import get_logger
 from decision_agent.models import ConversationContext, IntentClassification
 from decision_agent.prompts.classification_prompt import CLASSIFICATION_SYSTEM_PROMPT
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception
+
+def is_503_error(e: BaseException) -> bool:
+    return "503 unavailable" in str(e).lower() or "503 unavailable" in repr(e).lower()
 
 
 class IntentClassifier:
@@ -29,9 +34,11 @@ class IntentClassifier:
         logger: structlog.stdlib.BoundLogger | None = None,
     ) -> None:
         self.model_name = model_name
-        self._client = genai.Client(api_key=api_key)
+        self._client = wrappers.wrap_gemini(genai.Client(api_key=api_key))
         self.log = logger or get_logger("decision_agent", stage="classify")
 
+    @traceable(name="DecisionAgent.classify", run_type="chain")
+    @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
     def classify(
         self,
         query: str,

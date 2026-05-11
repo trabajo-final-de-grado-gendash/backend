@@ -2,6 +2,7 @@
 
 from google import genai
 from google.genai import types
+from langsmith import traceable, wrappers
 from typing import List, Optional
 from .models import (
     DataFrameMetadata,
@@ -15,13 +16,17 @@ from .prompts.correction_prompt import CORRECTION_PROMPT_TEMPLATE
 from .prompts.modification_prompt import MODIFICATION_PROMPT_TEMPLATE
 import json
 from .config import Settings
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception
+
+def is_503_error(e: BaseException) -> bool:
+    return "503 unavailable" in str(e).lower() or "503 unavailable" in repr(e).lower()
 
 
 class GeminiClient:
     """Cliente para interactuar con Gemini usando el modelo configurado"""
     
     def __init__(self, config: Settings):
-        self.client = genai.Client(api_key=config.GEMINI_API_KEY)
+        self.client = wrappers.wrap_gemini(genai.Client(api_key=config.GEMINI_API_KEY))
         self.model = config.GEMINI_MODEL
         
         # Configuración base de generación
@@ -32,6 +37,8 @@ class GeminiClient:
             "max_output_tokens": 8192,
         }
     
+    @traceable(name="VizAgent.decide_and_generate", run_type="chain")
+    @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
     def decide_and_generate_code(
         self,
         user_request: str,
@@ -80,6 +87,8 @@ class GeminiClient:
         response_data = json.loads(response.text)
         return GeminiResponse(**response_data)
     
+    @traceable(name="VizAgent.request_correction", run_type="chain")
+    @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
     def request_correction(
         self,
         correction_request: CorrectionRequest
@@ -125,6 +134,8 @@ class GeminiClient:
         correction = CodeCorrectionResponse(**response_data)
         return correction.corrected_code
 
+    @traceable(name="VizAgent.modify_chart", run_type="chain")
+    @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
     def modify_chart_code(
         self,
         plotly_code: str,

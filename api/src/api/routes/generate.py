@@ -3,6 +3,7 @@ from typing import Any
 
 import structlog
 from fastapi import APIRouter, Depends, HTTPException
+from langsmith import traceable
 
 from api.models.schemas import (
     GenerateRequest,
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/api/v1", tags=["generate"])
         503: {"model": ErrorResponse, "description": "Error de base de datos"},
     }
 )
+@traceable(name="API.chat_endpoint", run_type="chain")
 async def generate_visualization(
     request: GenerateRequest,
     pipeline_service: Any = Depends(get_pipeline_service),
@@ -104,7 +106,9 @@ async def generate_visualization(
         
         e_str = str(e).lower()
         e_repr = repr(e).lower()
-        if "timeout" in e_str or "timeout" in e_repr:
+        if "503 unavailable" in e_str or "503 unavailable" in e_repr:
+            error_msg = str(e)
+        elif "timeout" in e_str or "timeout" in e_repr:
             error_msg = "La consulta tardó demasiado tiempo en procesarse. Por favor, intenta hacer una pregunta más específica o reintenta."
         elif "quota" in e_str or "429" in e_str or "exhausted" in e_str:
             error_msg = "El servicio de Inteligencia Artificial (Gemini) se ha quedado sin cuota. Por favor, intenta de nuevo más tarde."

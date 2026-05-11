@@ -242,6 +242,8 @@ class QueryVector(Base):
     query: Mapped[str] = mapped_column(Text, nullable=False)
     embedding: Mapped[Vector] = mapped_column(Vector(768), nullable=False)
     sql: Mapped[str] = mapped_column(Text, nullable=False)
+    cached_response: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    response_type: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

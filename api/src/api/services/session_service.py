@@ -35,11 +35,15 @@ class SessionService:
         chart_id: uuid.UUID | None = None
     ) -> ConversationMessage:
         await self.get_or_create_session(session_id)
+        
+        role_val = role.value if hasattr(role, "value") else role
+        response_type_val = response_type.value if hasattr(response_type, "value") else response_type
+        
         msg = ConversationMessage(
             session_id=session_id,
-            role=role.value,
+            role=role_val,
             content=content,
-            response_type=response_type.value if response_type else None,
+            response_type=response_type_val,
             chart_id=chart_id
         )
         self.db.add(msg)

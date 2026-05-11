@@ -13,6 +13,10 @@ cd /app/api
 alembic upgrade head
 
 echo "Starting the FastAPI application..."
-# Move into the api src folder and start uvicorn
+# Move into the api src folder and start uvicorn with hot reload enabled for all local packages
 cd /app/api/src
-exec uvicorn api.main:app --host 0.0.0.0 --port 8000
+exec uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload \
+    --reload-dir /app/api/src \
+    --reload-dir /app/decision_agent/src \
+    --reload-dir /app/viz_agent/src \
+    --reload-dir /app/vanna_agent/src

@@ -35,6 +35,7 @@ CORRECTION_PROMPT_TEMPLATE = """You are debugging Plotly visualization code that
 5. Include all necessary imports
 6. Return complete, executable Python code
 7. Add defensive checks if needed (e.g., check if column exists)
+8. **LANGUAGE**: All textual responses (like 'explanation') MUST be written in Spanish.
 
 Generate a response following the provided JSON schema with:
 - corrected_code: The complete fixed Python code

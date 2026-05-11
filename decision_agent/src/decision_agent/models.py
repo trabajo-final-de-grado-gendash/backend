@@ -17,6 +17,7 @@ class ResponseType(str, Enum):
     VISUALIZATION = "visualization"
     CLARIFICATION = "clarification"
     MESSAGE = "message"
+    ERROR = "error"
 
 
 class IntentCategory(str, Enum):

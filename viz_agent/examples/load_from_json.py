@@ -7,11 +7,12 @@ import plotly.io as pio
 
 # Leer el JSON
 names = [
-    "output_temporal_line",
-    "output_temporal_scatter",
-    "output_customer_pie",
-    "output_customer_box",
-    "output_customer_histogram"
+    # "output_temporal_line",
+    # "output_temporal_scatter",
+    # "output_customer_pie",
+    # "output_customer_box",
+    # "output_customer_histogram"
+    "output"
 ]
 for name in names:
     with open(f"{name}.json", "r", encoding="utf-8") as f:

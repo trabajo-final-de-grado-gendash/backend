@@ -44,6 +44,7 @@ MODIFICATION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Yo
 10. Ensure the returned code is complete and executable without any additional imports beyond those already in the original.
 11. **CRITICAL**: Return only the raw Python code. No markdown, no explanations, no code fences.
 12. Use the Conversation History section to resolve ambiguous references in the user's instruction (e.g., "the same color I mentioned before"). If there is no relevant prior context, ignore that section.
+13. **LANGUAGE**: All textual responses (like 'changes_description' or 'explanation') MUST be written in Spanish.
 
 Generate a response following the provided JSON schema.
 """

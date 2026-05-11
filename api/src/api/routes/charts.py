@@ -201,6 +201,7 @@ async def regenerate_chart(
                 session_id=session_id,
                 role=MessageRole.USER,
                 content=request.prompt,
+                chart_id=chart_id  # Guardar la referencia al gráfico citado
             )
         except Exception as exc:
             log.error("failed_to_save_user_message_regenerate", error=str(exc), session_id=str(session_id))
@@ -250,8 +251,9 @@ async def regenerate_chart(
                 session_id=session_id,
                 role=MessageRole.SYSTEM,
                 content=changes_description or "(Gráfico modificado sin descripción)",
-                response_type=ResponseType.VISUALIZATION,
-                chart_id=updated_chart.id,
+                response_type=ResponseType.MESSAGE,
+                # No se pasa chart_id: el chart se actualiza in-place en el frontend
+                # vía directUpdate. Este mensaje es solo la descripción textual del cambio.
             )
         except Exception as exc:
             log.error("failed_to_save_system_message_regenerate", error=str(exc), session_id=str(session_id))

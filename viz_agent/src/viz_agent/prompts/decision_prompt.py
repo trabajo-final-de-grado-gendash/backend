@@ -44,6 +44,7 @@ DECISION_PROMPT_TEMPLATE = """You are an expert data visualization agent. Analyz
 9. Always include necessary imports (import plotly.express as px, import pandas as pd, etc.)
 10. Add appropriate axis labels and titles for clarity
 11. **CRITICAL**: Use the existing `df` variable directly. Never construct a dictionary to override `df`.
+12. **LANGUAGE**: All textual responses (like 'reasoning' or 'explanation') MUST be written in Spanish.
 
 Generate a response following the provided JSON schema.
 """

@@ -1,7 +1,7 @@
 """add error to response type
 
 Revision ID: a3d9bf95cf62
-Revises: a3d9bf95cf61
+Revises: a633aea923e9
 Create Date: 2026-05-10 00:20:00.000000
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = 'a3d9bf95cf62'
-down_revision: Union[str, None] = 'a3d9bf95cf61'
+down_revision: Union[str, None] = 'a633aea923e9'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

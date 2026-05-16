@@ -57,22 +57,44 @@ async def generate_visualization(
         
         # Prepare response from cache
         cached_data = cached_query.cached_response
+        plotly_json = cached_data.get("plotly_json")
+        plotly_code = cached_data.get("plotly_code")
+        chart_type = cached_data.get("chart_type")
+        
+        # Create chart instance in this session
+        chart_id = None
+        if plotly_json:
+            try:
+                persisted_chart = await chart_service.save_chart(
+                    session_id=session_id,
+                    query=request.query,
+                    sql=cached_query.sql or "",
+                    viz_json=plotly_json,
+                    plotly_code=plotly_code,
+                    chart_type=chart_type
+                )
+                chart_id = persisted_chart.id
+            except Exception as e:
+                log.error("failed_to_save_cached_chart", error=str(e), session_id=str(session_id))
         
         # Save SYSTEM message to history
         await session_service.save_message(
             session_id=session_id, 
             role=MessageRole.SYSTEM, 
-            content=f"Resultado recuperado de caché: {request.query}",
-            response_type=cached_query.response_type or ResponseType.VISUALIZATION
+            content=cached_data.get("explanation") or f"Resultado recuperado de caché: {request.query}",
+            response_type=cached_query.response_type or ResponseType.VISUALIZATION,
+            chart_id=chart_id
         )
         
         return GenerateResponse(
             session_id=session_id,
             response_type=cached_query.response_type or ResponseType.VISUALIZATION,
-            plotly_json=cached_data.get("plotly_json"),
-            plotly_code=cached_data.get("plotly_code"),
+            plotly_json=plotly_json,
+            plotly_code=plotly_code,
             sql=cached_query.sql,
-            message=cached_data.get("explanation")
+            message=cached_data.get("explanation"),
+            chart_type=chart_type,
+            chart_id=chart_id
         )
 
     cached_sql = cached_query.sql if cached_query else None
@@ -138,11 +160,13 @@ async def generate_visualization(
             viz_data = {
                 "plotly_json": getattr(output.viz_result, "plotly_json", None) if output.viz_result else None,
                 "plotly_code": getattr(output.viz_result, "plotly_code", None) if output.viz_result else None,
-                "explanation": output.message
+                "explanation": output.message,
+                "chart_type": getattr(output.viz_result, "chart_type", None) if output.viz_result else None
             }
             if isinstance(output.viz_result, dict):
                 viz_data["plotly_json"] = output.viz_result.get("plotly_json")
                 viz_data["plotly_code"] = output.viz_result.get("plotly_code")
+                viz_data["chart_type"] = output.viz_result.get("chart_type")
 
             await vector_service.save_query_vector(
                 db, 

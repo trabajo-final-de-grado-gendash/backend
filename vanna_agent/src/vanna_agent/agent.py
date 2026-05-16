@@ -45,7 +45,7 @@ class VannaAgent:
 
     @traceable(name="VannaAgent.text_to_sql", run_type="chain")
     @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
-    def text_to_sql(self, query: str) -> Text2SQLOutput:
+    async def text_to_sql(self, query: str, schema_context: str = "") -> Text2SQLOutput:
         """
         Traduce una pregunta en lenguaje natural a código SQL
         usando Vanna AI y la API de Google Gemini.
@@ -62,6 +62,10 @@ class VannaAgent:
             # Construir petición directa al LLM usando la nueva interfaz de Vanna (LlmRequest)
             # Solicitamos directamente el SQL para luego validarlo nosotros (en DecisionAgent),
             # sin ejecutar herramientas automáticamente aún.
+            context_instructions = ""
+            if schema_context:
+                context_instructions = f"\n\nCONTEXTO SEMÁNTICO DEL ESQUEMA:\nUtiliza la siguiente información para entender el esquema y seleccionar las tablas/columnas adecuadas:\n{schema_context}\n"
+
             req = LlmRequest(
                 messages=[LlmMessage(role="user", content=query)],
                 user=User(id="decision_agent", role="system"),
@@ -80,26 +84,12 @@ class VannaAgent:
                     "   - Formato PROHIBIDO: public.\"NombreDeTabla\" o \"NombreDeTabla\"\n"
                     "   - Ejemplo de uso: SELECT \"TotalAmount\" FROM \"bigenia\".\"Invoice\"\n"
                     "4. SEGURIDAD: Solo genera sentencias SELECT. DML/DDL prohibidos."
+                    f"{context_instructions}"
                 ),
                 temperature=0.0
             )
             
-            import asyncio
-            
-            # send_request en GeminiLlmService es asíncrono
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
-                
-            if loop and loop.is_running():
-                # Estamos dentro de un event loop existente, usamos create_task si no podemos bloquear,
-                # pero idealmente esto se llama desde un ThreadPoolExecutor en FastAPI
-                import nest_asyncio
-                nest_asyncio.apply()
-                response = asyncio.run(self.llm.send_request(req))
-            else:
-                response = asyncio.run(self.llm.send_request(req))
+            response = await self.llm.send_request(req)
             
             # Limpiar el output en caso de que el LLM incluya tags markdown 
             sql_result = response.content.strip() if response.content else ""
@@ -125,7 +115,7 @@ class VannaAgent:
             )
 
     @traceable(name="VannaAgent.execute_sql", run_type="tool")
-    def execute_sql(self, sql: str) -> pd.DataFrame:
+    async def execute_sql(self, sql: str) -> pd.DataFrame:
         """
         Ejecuta la sentencia SQL validada sobre Chinook PostgreSQL.
 
@@ -138,21 +128,8 @@ class VannaAgent:
         # Delegar ejecución real vía PostgresRunner usando la API formal de Vanna v2
         try:
             from vanna.capabilities.sql_runner.models import RunSqlToolArgs
-            import asyncio
-
             args = RunSqlToolArgs(sql=sql)
-            
-            try:
-                loop = asyncio.get_running_loop()
-            except RuntimeError:
-                loop = None
-
-            if loop and loop.is_running():
-                import nest_asyncio
-                nest_asyncio.apply()
-                result = asyncio.run(self.sql_runner.run_sql(args=args, context=None)) # type: ignore
-            else:
-                result = asyncio.run(self.sql_runner.run_sql(args=args, context=None)) # type: ignore
+            result = await self.sql_runner.run_sql(args=args, context=None) # type: ignore
                 
             if not isinstance(result, pd.DataFrame):
                 result = pd.DataFrame(result)

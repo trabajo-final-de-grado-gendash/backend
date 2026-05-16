@@ -114,7 +114,8 @@ async def generate_visualization(
 
     # Llamar al pipeline orquestador
     try:
-        output = pipeline_service.run(
+        # Ahora la invocación es verdaderamente asíncrona, sin bloquear el event loop de FastAPI
+        output = await pipeline_service.run(
             query=request.query,
             session_id=session_id,
             conversation_history=history,

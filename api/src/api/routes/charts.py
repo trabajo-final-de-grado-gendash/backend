@@ -179,11 +179,10 @@ async def regenerate_chart(
             log.warning("failed_to_fetch_conversation_history", error=str(exc), session_id=str(session_id))
 
     # 4. Re-ejecutar el SQL guardado para obtener el DataFrame real
-    #    execute_sql es síncrona/bloqueante — se corre en thread pool para no
-    #    bloquear el event loop de uvloop.
+    #    execute_sql ahora es verdaderamente asíncrono.
     vanna_agent = pipeline_service.decision_agent.text2sql_agent
     try:
-        dataframe = await asyncio.to_thread(vanna_agent.execute_sql, chart.sql)
+        dataframe = await vanna_agent.execute_sql(chart.sql)
     except Exception as exc:
         log.error(
             "chart_regeneration_sql_failed",
@@ -208,15 +207,14 @@ async def regenerate_chart(
         except Exception as exc:
             log.error("failed_to_save_user_message_regenerate", error=str(exc), session_id=str(session_id))
 
-    # 6. Invocar VizAgent.modify_chart (también síncrono/bloqueante)
+    # 6. Invocar VizAgent.modify_chart (ahora asíncrono nativo)
     log.info("viz_agent_modify_started", chart_id=str(chart_id))
     viz_agent = pipeline_service.decision_agent.viz_agent
-    modification_output = await asyncio.to_thread(
-        viz_agent.modify_chart,
-        chart.plotly_code,
-        dataframe,
-        request.prompt,
-        conversation_history,
+    modification_output = await viz_agent.modify_chart(
+        plotly_code=chart.plotly_code,
+        dataframe=dataframe,
+        user_prompt=request.prompt,
+        conversation_history=conversation_history,
     )
 
     if not modification_output.success:

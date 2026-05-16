@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from google import genai
 from google.genai import types
 
-from api.models.database import QueryVector
+from api.models.database import QueryVector, SchemaDocumentation
 from api.models.schemas import ResponseType
 from api.config import Settings
 
@@ -100,3 +100,48 @@ class VectorService:
         db.add(new_vector)
         await db.commit()
         return new_vector
+
+    async def find_relevant_schema_docs(
+        self,
+        db: AsyncSession,
+        query_text: str,
+        limit: int = 7
+    ) -> List[SchemaDocumentation]:
+        """
+        Busca documentos de esquema (tablas y columnas) relevantes para la consulta.
+        """
+        embedding = await self.get_embedding(query_text)
+        
+        stmt = select(SchemaDocumentation).order_by(
+            SchemaDocumentation.embedding.cosine_distance(embedding)
+        ).limit(limit)
+        
+        result = await db.execute(stmt)
+        return list(result.scalars().all())
+        
+    async def save_schema_doc(
+        self,
+        db: AsyncSession,
+        table_name: str,
+        column_name: Optional[str],
+        description: str
+    ) -> SchemaDocumentation:
+        """ Guarda un nuevo documento de esquema con su embedding. """
+        # Embeber la descripción junto con el nombre de tabla/columna para mayor contexto
+        text_to_embed = f"Tabla: {table_name}"
+        if column_name:
+            text_to_embed += f", Columna: {column_name}"
+        text_to_embed += f". Descripción: {description}"
+        
+        embedding = await self.get_embedding(text_to_embed)
+        
+        new_doc = SchemaDocumentation(
+            table_name=table_name,
+            column_name=column_name,
+            description=description,
+            embedding=embedding
+        )
+        
+        db.add(new_doc)
+        await db.commit()
+        return new_doc

@@ -39,7 +39,7 @@ class IntentClassifier:
 
     @traceable(name="DecisionAgent.classify", run_type="chain")
     @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
-    def classify(
+    async def classify(
         self,
         query: str,
         conversation_history: list[ConversationContext] | None = None,
@@ -70,7 +70,7 @@ class IntentClassifier:
         prompt = f"Consulta del usuario para clasificar: {query}"
 
         try:
-            response = self._client.models.generate_content(
+            response = await self._client.aio.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(

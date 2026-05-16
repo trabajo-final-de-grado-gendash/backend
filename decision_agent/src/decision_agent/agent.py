@@ -89,29 +89,31 @@ class DecisionAgent:
         except ImportError:
             self.log.warning("viz_agent_not_found_standalone")
 
-    def run(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
-        """Entry point orquestador principal con timeout de 30s."""
+    async def run(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
+        """Entry point orquestador principal con timeout asíncrono nativo."""
 
-        import concurrent.futures
-        import contextvars
+        import asyncio
+        import time
 
-        ctx = contextvars.copy_context()
         t_start = time.perf_counter()
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(ctx.run, self._run_internal, input_data)
-            try:
-                return future.result(timeout=self.settings.PIPELINE_TIMEOUT_SECONDS)
+        
+        try:
+            # Reemplazamos el ThreadPoolExecutor por asyncio.wait_for para cancelación real
+            return await asyncio.wait_for(
+                self._run_internal(input_data), 
+                timeout=self.settings.PIPELINE_TIMEOUT_SECONDS
+            )
 
-            except concurrent.futures.TimeoutError as exc:
-                elapsed = int((time.perf_counter() - t_start) * 1000)
-                self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=elapsed)
-                raise PipelineError(
-                    message=f"El pipeline excedió el límite de tiempo de {self.settings.PIPELINE_TIMEOUT_SECONDS} segundos (timeout).",
-                    stage="timeout"
-                ) from exc
+        except asyncio.TimeoutError as exc:
+            elapsed = int((time.perf_counter() - t_start) * 1000)
+            self.log.error("decision_agent_timeout", error="timeout_exceeded", elapsed_ms=elapsed)
+            raise PipelineError(
+                message=f"El pipeline excedió el límite de tiempo de {self.settings.PIPELINE_TIMEOUT_SECONDS} segundos (timeout).",
+                stage="timeout"
+            ) from exc
 
 
-    def _run_internal(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
+    async def _run_internal(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
         """Lógica original de orquestación."""
         t0 = time.perf_counter()
         session_id_str = str(input_data.session_id) if input_data.session_id else "No-Session"
@@ -126,11 +128,11 @@ class DecisionAgent:
         if input_data.cached_sql:
             self.log.info("using_cached_sql", sql=input_data.cached_sql)
             metadata["cached"] = True
-            return self._execute_data_pipeline(query, metadata, sql_override=input_data.cached_sql)
+            return await self._execute_data_pipeline(query, metadata, sql_override=input_data.cached_sql)
         
         try:
             # 1. Clasificación
-            intent = self.classifier.classify(query=query, conversation_history=history)
+            intent = await self.classifier.classify(query=query, conversation_history=history)
             
             # Enrutamiento según US2 (Fase 4 -> aunque preparamos la esctructura aquí para luego)
             if intent.category == IntentCategory.VALID_BUT_AMBIGUOUS:
@@ -184,7 +186,7 @@ class DecisionAgent:
                     resolved=intent.resolved_query,
                 )
 
-            return self._execute_data_pipeline(effective_query, metadata)
+            return await self._execute_data_pipeline(effective_query, metadata)
 
 
         except Exception as e:
@@ -194,7 +196,12 @@ class DecisionAgent:
                 raise
             raise PipelineError(f"DecisionAgent falló con error: {e}") from e
 
-    def _execute_data_pipeline(self, query: str, metadata: dict[str, Any], sql_override: str | None = None) -> DecisionAgentOutput:
+    async def _execute_data_pipeline(
+        self, 
+        query: str, 
+        metadata: dict[str, Any], 
+        sql_override: str | None = None,
+    ) -> DecisionAgentOutput:
         """Sub-workflow para queries analíticas válidas: Vanna -> Validator -> DB -> Viz"""
         
         # 1. Text2SQL (Intento inicial)
@@ -202,7 +209,25 @@ class DecisionAgent:
         if sql_override:
             sql = sql_override
         else:
-            t2s_output = self.text2sql_agent.text_to_sql(query)
+            # Obtener contexto semántico RAG
+            schema_context = ""
+            try:
+                from api.db.engine import get_session_factory
+                from api.services.vector_service import VectorService
+                
+                async def fetch_schema():
+                    factory = get_session_factory()
+                    v_service = VectorService()
+                    async with factory() as db:
+                        docs = await v_service.find_relevant_schema_docs(db, query, limit=5)
+                        return "\n".join([f"- Tabla {d.table_name}" + (f", Columna {d.column_name}" if d.column_name else "") + f": {d.description}" for d in docs])
+                        
+                schema_context = await fetch_schema()
+                self.log.info("schema_context_fetched", chars=len(schema_context))
+            except Exception as e:
+                self.log.warning("failed_to_fetch_schema_context", error=str(e))
+
+            t2s_output = await self.text2sql_agent.text_to_sql(query, schema_context=schema_context)
             sql = t2s_output.sql
             
             if not t2s_output.success or not sql:
@@ -226,7 +251,7 @@ class DecisionAgent:
                 
                 # 3. DB Execution
                 self.log.info("executing_sql", attempt=attempt)
-                df_result = self.text2sql_agent.execute_sql(current_sql)
+                df_result = await self.text2sql_agent.execute_sql(current_sql)
                 execution_error = None
                 break  # Éxito! Salir del loop de reintentos
                 
@@ -245,7 +270,7 @@ class DecisionAgent:
                 refined_query = format_refinement_prompt(query=query, sql=current_sql, error=execution_error)
                 
                 # Re-invocar Vanna con sugerencia de contexto
-                retry_output = self.text2sql_agent.text_to_sql(refined_query)
+                retry_output = await self.text2sql_agent.text_to_sql(refined_query, schema_context=schema_context)
                 if not retry_output.success or not retry_output.sql:
                     raise PipelineError("Vanna falló en retry con query reformulada.", stage="text_to_sql")
                 
@@ -270,9 +295,9 @@ class DecisionAgent:
             
             # En duck_typing o protocol, asume generate_visualization
             if hasattr(self.viz_agent, "generate_visualization"):
-                viz_output = self.viz_agent.generate_visualization(viz_input)
+                viz_output = await self.viz_agent.generate_visualization(viz_input)
             else:
-                viz_output = self.viz_agent.run(viz_input)
+                viz_output = await self.viz_agent.run(viz_input)
             
             if not viz_output.success:
                 raise PipelineError(f"VizAgent dictaminó fallo en la visualización: {viz_output.error_message}", stage="viz_agent")

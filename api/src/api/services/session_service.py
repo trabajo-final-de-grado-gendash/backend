@@ -128,3 +128,12 @@ class SessionService:
             })
             
         return sessions
+
+    async def delete_session(self, session_id: uuid.UUID) -> bool:
+        session = await self.get_session(session_id)
+        if not session:
+            return False
+        
+        await self.db.delete(session)
+        await self.db.commit()
+        return True

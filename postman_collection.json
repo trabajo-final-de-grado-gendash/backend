@@ -111,6 +111,27 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Delete Session",
+          "id": "a25e4cdd-1aa4-4612-bf2e-724945e47cbe",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/v1/sessions/{{session_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "sessions",
+                "{{session_id}}"
+              ]
+            }
+          },
+          "response": []
         }
       ],
       "id": "75508cce-844c-4abc-b08a-ead935fcd59e"

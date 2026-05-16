@@ -48,3 +48,25 @@ async def get_session_history(
         session_id=session_id,
         messages=messages
     )
+
+
+@router.delete(
+    "/sessions/{session_id}",
+    responses={
+        200: {"description": "Sesión eliminada correctamente"},
+        404: {"model": ErrorResponse, "description": "Sesión no encontrada"}
+    }
+)
+async def delete_session(
+    session_id: uuid.UUID,
+    session_service: Any = Depends(get_session_service)
+):
+    """
+    Delete a session and all its associated data.
+    """
+    deleted = await session_service.delete_session(session_id)
+    if not deleted:
+        log.warning("session_not_found_for_deletion", session_id=str(session_id))
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    return {"message": "Session deleted successfully"}

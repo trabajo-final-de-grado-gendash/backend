@@ -51,7 +51,7 @@ class PipelineService:
     def __init__(self):
         self.decision_agent = get_decision_agent()
 
-    def run(
+    async def run(
         self,
         query: str,
         session_id: uuid.UUID | None = None,
@@ -70,7 +70,7 @@ class PipelineService:
         )
         
         try:
-            return self.decision_agent.run(input_data)
+            return await self.decision_agent.run(input_data)
         except (SQLValidationError, PipelineError):
             raise
         except Exception as e:

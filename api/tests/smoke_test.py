@@ -25,12 +25,12 @@ async def test_generate_end_to_end_mock(async_client):
     app.dependency_overrides[get_session_service] = lambda: mock_session
 
     # Setup mock behavior
-    mock_pipeline.run.return_value = DecisionAgentOutput(
+    mock_pipeline.run = AsyncMock(return_value=DecisionAgentOutput(
         response_type=ResponseType.VISUALIZATION,
         sql="SELECT 1",
         viz_result=MagicMock(plotly_json={"data": []}, plotly_code="import plotly"),
         message="Success"
-    )
+    ))
     
     mock_id = uuid.uuid4()
     mock_result.save_result = AsyncMock(return_value=MagicMock(id=mock_id))

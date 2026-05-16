@@ -17,10 +17,10 @@ from decision_agent.models import DecisionAgentInput, DecisionAgentOutput
 class Text2SQLAgent(Protocol):
     """Protocolo para agentes de generación de SQL (ej. VannaAgent)."""
 
-    def text_to_sql(self, query: str) -> Any:
+    async def text_to_sql(self, query: str, schema_context: str = "") -> Any:
         ...
 
-    def execute_sql(self, sql: str) -> pd.DataFrame:
+    async def execute_sql(self, sql: str) -> pd.DataFrame:
         ...
 
 
@@ -28,10 +28,10 @@ class Text2SQLAgent(Protocol):
 class VizAgentProtocol(Protocol):
     """Protocolo para agentes de visualización."""
 
-    def run(self, input_data: Any) -> Any:
+    async def run(self, input_data: Any) -> Any:
         ...
 
-    def generate_visualization(self, input_data: Any) -> Any:
+    async def generate_visualization(self, input_data: Any) -> Any:
         ...
 
 
@@ -39,5 +39,5 @@ class VizAgentProtocol(Protocol):
 class DecisionAgentProtocol(Protocol):
     """Protocolo para el agente decisor principal (exposición hacia la API)."""
 
-    def run(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
+    async def run(self, input_data: DecisionAgentInput) -> DecisionAgentOutput:
         ...

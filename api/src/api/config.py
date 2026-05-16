@@ -34,6 +34,7 @@ class Settings(BaseSettings):
 
     # Database
     APP_DB_URL: str
+    SOURCE_DB_URL: str
 
     # Security
     CORS_ORIGINS: Annotated[list[str], BeforeValidator(parse_cors_origins)] = [

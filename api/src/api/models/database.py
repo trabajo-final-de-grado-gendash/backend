@@ -253,3 +253,40 @@ class QueryVector(Base):
 
     def __repr__(self) -> str:
         return f"<QueryVector id={self.id} query={self.query[:30]}...>"
+
+
+class SchemaDocumentation(Base):
+    """
+    Persistencia de contexto semántico de tablas y columnas (TFG-88).
+    Almacena las descripciones generadas por Gemini para el esquema,
+    con embeddings para su recuperación vía RAG.
+    """
+
+    __tablename__ = "schema_documentation"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid.uuid4,
+    )
+    table_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    # column_name es nulo si la fila describe la tabla en general
+    column_name: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    description: Mapped[str] = mapped_column(Text, nullable=False)
+    embedding: Mapped[Vector] = mapped_column(Vector(768), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        server_default=func.now(),
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
+        onupdate=_utcnow,
+        server_default=func.now(),
+    )
+
+    def __repr__(self) -> str:
+        return f"<SchemaDocumentation table={self.table_name} column={self.column_name}>"

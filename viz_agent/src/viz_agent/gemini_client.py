@@ -39,7 +39,7 @@ class GeminiClient:
     
     @traceable(name="VizAgent.decide_and_generate", run_type="chain")
     @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
-    def decide_and_generate_code(
+    async def decide_and_generate_code(
         self,
         user_request: str,
         df_metadata: DataFrameMetadata,
@@ -77,7 +77,7 @@ class GeminiClient:
         )
         
         # Llamar a Gemini con structured output
-        response = self.client.models.generate_content(
+        response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=prompt,
             config=config
@@ -89,7 +89,7 @@ class GeminiClient:
     
     @traceable(name="VizAgent.request_correction", run_type="chain")
     @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
-    def request_correction(
+    async def request_correction(
         self,
         correction_request: CorrectionRequest
     ) -> str:
@@ -117,7 +117,7 @@ class GeminiClient:
             response_schema=schema,
         )
         
-        response = self.client.models.generate_content(
+        response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=prompt,
             config=config
@@ -136,7 +136,7 @@ class GeminiClient:
 
     @traceable(name="VizAgent.modify_chart", run_type="chain")
     @retry(stop=stop_after_attempt(4), wait=wait_fixed(3), retry=retry_if_exception(is_503_error), reraise=True)
-    def modify_chart_code(
+    async def modify_chart_code(
         self,
         plotly_code: str,
         user_prompt: str,
@@ -188,7 +188,7 @@ class GeminiClient:
             response_schema=schema,
         )
 
-        response = self.client.models.generate_content(
+        response = await self.client.aio.models.generate_content(
             model=self.model,
             contents=prompt,
             config=config,

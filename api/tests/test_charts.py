@@ -211,13 +211,13 @@ class TestRegenerateChart:
         mock_viz_output.chart_type = "bar"
 
         mock_viz_agent = MagicMock()
-        mock_viz_agent.modify_chart.return_value = mock_viz_output
+        mock_viz_agent.modify_chart = AsyncMock(return_value=mock_viz_output)
 
         # Mock del VannaAgent para re-ejecutar el SQL
         import pandas as pd
         mock_df = pd.DataFrame({"x": [1, 2], "y": [3, 4]})
         mock_vanna_agent = MagicMock()
-        mock_vanna_agent.execute_sql.return_value = mock_df
+        mock_vanna_agent.execute_sql = AsyncMock(return_value=mock_df)
 
         mock_pipeline = MagicMock()
         mock_pipeline.decision_agent.viz_agent = mock_viz_agent
@@ -239,12 +239,12 @@ class TestRegenerateChart:
         assert data["chart_type"] == "bar"
 
         # Verificar que se llamó a modify_chart con los args correctos
-        # (asyncio.to_thread pasa los args posicionalmente)
+        # (ahora asíncrono)
         mock_viz_agent.modify_chart.assert_called_once_with(
-            mock_chart.plotly_code,
-            mock_df,
-            "Cambiá el color a azul",
-            [],
+            plotly_code=mock_chart.plotly_code,
+            dataframe=mock_df,
+            user_prompt="Cambiá el color a azul",
+            conversation_history=[],
         )
 
     @pytest.mark.asyncio
@@ -283,11 +283,11 @@ class TestRegenerateChart:
         mock_viz_output.error_message = "Gemini API timeout"
 
         mock_viz_agent = MagicMock()
-        mock_viz_agent.modify_chart.return_value = mock_viz_output
+        mock_viz_agent.modify_chart = AsyncMock(return_value=mock_viz_output)
 
         import pandas as pd
         mock_vanna_agent = MagicMock()
-        mock_vanna_agent.execute_sql.return_value = pd.DataFrame({"x": [1], "y": [2]})
+        mock_vanna_agent.execute_sql = AsyncMock(return_value=pd.DataFrame({"x": [1], "y": [2]}))
 
         mock_pipeline = MagicMock()
         mock_pipeline.decision_agent.viz_agent = mock_viz_agent

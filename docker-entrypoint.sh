@@ -12,6 +12,10 @@ cd /app/api
 # Run alembic migrations to setup the genbi_db schema
 alembic upgrade head
 
+echo "Running Schema Enhancer..."
+export PYTHONPATH=/app/api/src:$PYTHONPATH
+python /app/api/src/scripts/run_schema_enhancer.py
+
 echo "Starting the FastAPI application..."
 # Move into the api src folder and start uvicorn with hot reload enabled for all local packages
 cd /app/api/src

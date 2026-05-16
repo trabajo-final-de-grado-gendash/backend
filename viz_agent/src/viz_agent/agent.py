@@ -33,7 +33,7 @@ class VizAgent:
     # Public API
     # ------------------------------------------------------------------
 
-    def generate_visualization(self, input_data: VizAgentInput) -> VizAgentOutput:
+    async def generate_visualization(self, input_data: VizAgentInput) -> VizAgentOutput:
         """
         Genera una visualización completa a partir de un DataFrame y una consulta.
 
@@ -66,7 +66,7 @@ class VizAgent:
             session_data["dataframe_metadata"] = df_metadata.model_dump()
 
             # 3. Decisión y generación de código (Gemini)
-            gemini_response = self.gemini_client.decide_and_generate_code(
+            gemini_response = await self.gemini_client.decide_and_generate_code(
                 user_request=input_data.user_request,
                 df_metadata=df_metadata,
                 allowed_charts=input_data.allowed_charts,
@@ -80,7 +80,7 @@ class VizAgent:
             session_data["initial_code"] = gemini_response.plotly_code
 
             # 4 & 5. Ejecutar con loop de corrección
-            final_code, validation_result, corrections = self._execute_with_correction_loop(
+            final_code, validation_result, corrections = await self._execute_with_correction_loop(
                 initial_code=gemini_response.plotly_code,
                 dataframe=input_data.dataframe,
                 df_metadata=df_metadata,
@@ -139,7 +139,7 @@ class VizAgent:
                 metadata={"execution_time": execution_time},
             )
 
-    def modify_chart(
+    async def modify_chart(
         self,
         plotly_code: str,
         dataframe: pd.DataFrame,
@@ -169,7 +169,7 @@ class VizAgent:
             df_metadata = self.analyzer.analyze(dataframe)
 
             # 2. Pedir a Gemini el código modificado
-            modified_code, changes_description = self.gemini_client.modify_chart_code(
+            modified_code, changes_description = await self.gemini_client.modify_chart_code(
                 plotly_code=plotly_code,
                 user_prompt=user_prompt,
                 df_metadata=df_metadata,
@@ -178,7 +178,7 @@ class VizAgent:
             self.logger.log_code_generated(f"[MODIFY]\n{modified_code}")
 
             # 3. Ejecutar con loop de corrección
-            final_code, validation_result, corrections = self._execute_with_correction_loop(
+            final_code, validation_result, corrections = await self._execute_with_correction_loop(
                 initial_code=modified_code,
                 dataframe=dataframe,
                 df_metadata=df_metadata,
@@ -230,7 +230,7 @@ class VizAgent:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _execute_with_correction_loop(
+    async def _execute_with_correction_loop(
         self,
         initial_code: str,
         dataframe: pd.DataFrame,
@@ -279,7 +279,7 @@ class VizAgent:
                 dataframe_metadata=df_metadata,
                 attempt_number=attempt,
             )
-            corrected_code = self.gemini_client.request_correction(correction_request)
+            corrected_code = await self.gemini_client.request_correction(correction_request)
 
             corrections.append({
                 "attempt": attempt,

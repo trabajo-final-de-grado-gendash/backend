@@ -19,6 +19,7 @@ dependencies = [
     "python-dotenv>=1.0.0",
     # Data
     "pandas>=2.2.0",
+    "langsmith>=0.8.3",
 ]
 
 [project.optional-dependencies]

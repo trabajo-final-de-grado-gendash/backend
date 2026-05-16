@@ -93,10 +93,12 @@ class DecisionAgent:
         """Entry point orquestador principal con timeout de 30s."""
 
         import concurrent.futures
+        import contextvars
 
+        ctx = contextvars.copy_context()
         t_start = time.perf_counter()
         with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(self._run_internal, input_data)
+            future = executor.submit(ctx.run, self._run_internal, input_data)
             try:
                 return future.result(timeout=self.settings.PIPELINE_TIMEOUT_SECONDS)
 

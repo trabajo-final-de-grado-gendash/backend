@@ -28,3 +28,9 @@ class Settings(BaseSettings):
     SOURCE_DB_URL: str
     CONTEXT_WINDOW_SIZE: int = 5
     PIPELINE_TIMEOUT_SECONDS: int = 60
+
+    # LangSmith observability (opcional, el SDK de LangSmith lo lee auto si está en el entorno)
+    LANGCHAIN_TRACING_V2: str | None = None
+    LANGCHAIN_ENDPOINT: str | None = None
+    LANGCHAIN_API_KEY: str | None = None
+    LANGCHAIN_PROJECT: str | None = None

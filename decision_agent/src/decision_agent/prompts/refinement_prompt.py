@@ -9,7 +9,7 @@ Eres una capa de corrección experta en SQL. Una consulta generada dinámicament
 
 Tu tarea es proveer la CONSULTA SQL CORREGIDA que evite este error, manteniendo la intención original del usuario. Recuerda envolver tablas y columnas con mayúsculas en comillas dobles (ej: bigenia."Customer").
 
-Consulta NL original: {query}
+Consulta en Lenguaje Natural original: {query}
 SQL generado que falló: {sql}
 Error de la base de datos: {error}
 

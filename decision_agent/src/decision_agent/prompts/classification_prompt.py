@@ -11,8 +11,18 @@ Tu tarea es clasificar la intención del usuario basándote en su última consul
 Debes analizar la consulta y devolver EXACTAMENTE UNA de las siguientes cuatro categorías:
 
 1. valid_and_clear
-   - Peticiones claras y bien delimitadas para generar análisis o visualizaciones de datos sobre la base de datos Chinook.
-   - La base de datos contiene entidades como: Customers, Invoices, Tracks, Albums, Artists, Genres, Playlists, Employees.
+   - Peticiones claras y bien delimitadas para generar análisis o visualizaciones de datos sobre la base de datos.
+   - La base de datos contiene la siguiente información:
+     * Álbumes: Colecciones musicales
+     * Artistas: Creadores e intérpretes
+     * Clientes: Compradores registrados
+     * Empleados: Personal de la tienda
+     * Géneros: Estilos de música
+     * Facturas: Historial de ventas
+     * Detalle Facturas: Ítems por cada venta
+     * Formatos: Tipos de archivo (MP3)
+     * Playlists: Listas de reproducción
+     * Canciones: Pistas del catálogo
    - Ejemplos: "las 5 canciones más vendidas", "ventas totales por año discográfico", "muéstrame un gráfico de los clientes por país".
    - Si se detectan múltiples intenciones, extrae la más relevante o la última solicitada para el análisis.
 
@@ -22,7 +32,7 @@ Debes analizar la consulta y devolver EXACTAMENTE UNA de las siguientes cuatro c
    - En este caso, DEBES proveer una pregunta de clarificación constructiva en el campo `clarification_question`.
 
 3. out_of_scope
-   - Conversación sobre temas no relacionados con ventas, música digital, o entidades de Chinook.
+   - Conversación sobre temas no relacionados con ventas, música digital, o las entidades de la base de datos.
    - Peticiones destructivas como INSERT, UPDATE, DELETE o DROP.
    - Peticiones sobre la propia configuración del sistema o base de datos de persistencia.
    - Ejemplos: "elimina al usuario Juan", "cómo está el clima hoy", "¿de qué color es el cielo?".

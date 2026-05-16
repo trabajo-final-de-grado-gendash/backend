@@ -26,7 +26,7 @@ class VectorService:
             settings = Settings()
         
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
-        self.model_id = "gemini-embedding-001"
+        self.model_id = "gemini-embedding-2"
         self.dimension = 768
 
     async def get_embedding(self, text_input: str) -> List[float]:
@@ -34,11 +34,13 @@ class VectorService:
         response = self.client.models.embed_content(
             model=self.model_id,
             contents=[text_input],
-            config=types.EmbedContentConfig(task_type="RETRIEVAL_QUERY")
+            config=types.EmbedContentConfig(
+                task_type="RETRIEVAL_QUERY",
+                output_dimensionality=self.dimension
+            )
         )
         embedding = response.embeddings[0].values
-        # Asegurar que tenemos exactamente la dimensión esperada
-        return embedding[:self.dimension]
+        return embedding
 
     async def find_similar_query(
         self, 
